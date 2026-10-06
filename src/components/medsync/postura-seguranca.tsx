@@ -128,7 +128,8 @@ export function PosturaSeguranca({ dias }: { dias: number }) {
               </div>
               <p className="mt-2 text-3xl font-semibold">{atencoes}</p>
               <p className="text-xs text-muted-foreground">
-                Tabelas com RLS: {data?.resumoTabelas.comRls ?? 0}/{data?.resumoTabelas.total ?? 0}
+                Tabelas protegidas (acesso só pela API): {data?.resumoTabelas.comRls ?? 0}/
+                {data?.resumoTabelas.total ?? 0}
               </p>
             </div>
           </div>

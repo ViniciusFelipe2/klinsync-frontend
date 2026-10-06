@@ -1,6 +1,10 @@
 name: Deploy KlinSync Frontend (S3)
 
 # Publica o build do front no bucket S3 klinsync-frontend (us-east-2).
+# Versionamento: cada publicação recebe uma versão semântica (vX.Y.Z) gravada em /version.json e numa tag +
+# GitHub Release. O bucket é um espelho exato do build: o que sai do repositório sai do bucket (o versionamento
+# do S3 permite recuperar versões anteriores por 90 dias).
+#
 # Mesmo padrão do tf-vpc: ambiente develop + role vinda do secret AWS_ROLE_ARN_DEVELOP (OIDC).
 #
 # Em Settings > Environments > develop (do repositório klinsync-frontend):
@@ -15,9 +19,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "Incremento da versão semântica. 'auto' (padrão) decide pelos commits: feat! / BREAKING CHANGE = major, feat = minor, demais = patch"
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
 
 permissions:
-  contents: read
+  contents: write   # criar tags e GitHub Releases
   id-token: write
 
 concurrency:
@@ -36,12 +46,50 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0   # necessário para ler as tags de versão
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
+
+      - name: Calcular versão (semver)
+        id: version
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          git fetch --tags --force --quiet
+          EXACT="$(git tag --points-at HEAD --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1)"
+          if [ -n "$EXACT" ]; then
+            VERSION="${EXACT#v}"
+            echo "Commit já marcado como $EXACT; reutilizando a versão."
+          else
+            LAST="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1)"
+            if [ -z "$LAST" ]; then
+              VERSION="0.1.0"
+            else
+              IFS=. read -r MA MI PA <<< "${LAST#v}"
+              if [ "$BUMP" = "auto" ]; then
+                # Conventional Commits desde a última tag: "feat!:" ou BREAKING CHANGE -> major; "feat:" -> minor; resto -> patch
+                MSGS="$(git log --format=%B "$LAST"..HEAD)"
+                if grep -Eq '^(BREAKING[ -]CHANGE|[a-z]+(\([^)]*\))?!:)' <<< "$MSGS"; then BUMP=major
+                elif grep -Eq '^feat(\([^)]*\))?:' <<< "$MSGS"; then BUMP=minor
+                else BUMP=patch
+                fi
+                echo "Incremento detectado pelos commits: $BUMP"
+              fi
+              case "$BUMP" in
+                major) MA=$((MA + 1)); MI=0; PA=0 ;;
+                minor) MI=$((MI + 1)); PA=0 ;;
+                *) PA=$((PA + 1)) ;;
+              esac
+              VERSION="$MA.$MI.$PA"
+            fi
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versão desta publicação: v$VERSION"
 
       - name: Instalar dependências
         run: npm ci
@@ -70,6 +118,13 @@ jobs:
           npm run build
           test -f dist/index.html || { echo "dist/index.html não gerado"; exit 1; }
 
+      - name: Gerar version.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          printf '{"version":"%s","commit":"%s","builtAt":"%s"}\n' \
+            "$VERSION" "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > dist/version.json
+
       - name: Validar role da AWS
         env:
           AWS_ROLE_ARN_DEVELOP: ${{ secrets.AWS_ROLE_ARN_DEVELOP }}
@@ -86,20 +141,22 @@ jobs:
       - name: Validar autenticação
         run: aws sts get-caller-identity
 
-      - name: Enviar para o S3
+      - name: Enviar para o S3 (espelho do build)
         run: |
           BUCKET="s3://${S3_BUCKET}"
-          # Assets com hash no nome: cache longo. Sem --delete para não quebrar
-          # quem está com a versão anterior aberta.
+          # 1) Assets novos primeiro (nome com hash: cache longo), sem apagar nada ainda.
           aws s3 sync dist/assets "$BUCKET/assets" \
             --cache-control "public,max-age=31536000,immutable"
-          # Demais arquivos (ícones, manifest, robots): cache curto.
+          # 2) Demais arquivos (ícones, manifest, robots, version.json): cache curto; remove os que saíram do repositório.
           aws s3 sync dist "$BUCKET" --exclude "assets/*" --exclude "index.html" --delete \
             --cache-control "public,max-age=300"
-          # index.html por último e sem cache: passa a apontar para os assets novos.
+          # 3) index.html por último e sem cache: passa a apontar para os assets novos.
           aws s3 cp dist/index.html "$BUCKET/index.html" \
             --cache-control "no-cache, no-store, must-revalidate" \
             --content-type "text/html; charset=utf-8"
+          # 4) Só agora remove os assets que não fazem mais parte do build.
+          aws s3 sync dist/assets "$BUCKET/assets" --delete \
+            --cache-control "public,max-age=31536000,immutable"
 
       - name: Invalidar CloudFront
         env:
@@ -108,3 +165,14 @@ jobs:
           [ -n "$CF_ID" ] || { echo "Sem CloudFront configurado, nada a invalidar"; exit 0; }
           aws cloudfront create-invalidation --distribution-id "$CF_ID" \
             --paths "/index.html" "/manifest.webmanifest" "/robots.txt"
+
+      - name: Criar tag e GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "A release v$VERSION já existe."
+            exit 0
+          fi
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes

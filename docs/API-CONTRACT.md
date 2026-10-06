@@ -1,5 +1,7 @@
 # Contrato da API — KlinSync
 
+> Implementado em [`klinsync-backend`](https://github.com/ViniciusFelipe2/klinsync-backend) (testes de integração cobrem todos os endpoints abaixo).
+
 Contrato que o `klinsync-backend` (EC2) precisa implementar para o `klinsync-frontend`.
 Os tipos exatos de request/response estão em `src/lib/api/*.ts`; as tabelas, em `src/lib/api/db-types.ts`.
 Cada endpoint corresponde a uma server function do projeto mãe (`trizion/src/lib/*.functions.ts`), cuja regra de negócio deve ser reproduzida.
@@ -124,3 +126,18 @@ Todas as rotas de giro validam que a sala pertence ao tenant do chamador.
 
 O front hoje usa polling (10–15 s). Se for preciso latência menor, expor SSE/WebSocket autenticado
 (ex.: `GET /giro/stream`) emitindo "salas/eventos/paradas mudaram"; no front basta invalidar as queries em `src/hooks/use-giro.ts`.
+
+## Notas da implementação (klinsync-backend)
+
+- `/auth/logout` é público e usa só o `refreshToken` do corpo (funciona mesmo com o access token expirado).
+- `/auth/refresh` faz **rotação**: cada refresh token vale uma vez; reutilizar um token já trocado revoga a sessão inteira (401).
+- MFA: o login com fator verificado devolve `{ mfaRequired, mfaToken, factorId }`; o código TOTP é de **uso único** (um mesmo código não é aceito duas vezes).
+- Limites de taxa (por IP, janela de 1 min): login 30, MFA 10 (e 10 por usuário a cada 5 min), refresh 120, check-in 60, validar convite 20, aceitar convite 10.
+- Status HTTP: `401` não autenticado/credenciais ou código inválidos; `403` sem permissão; `404` fora do escopo do hospital; `409` conflito (duplicidade, etapa já iniciada/finalizada);
+  `422` validação e regras de negócio; `423` login bloqueado (`{ bloqueado, minutosRestantes }`); `429` rate limit; `503` fotos sem bucket configurado.
+- Datas de filtro (`de`/`ate`, `YYYY-MM-DD`) valem no fuso do hospital (`APP_TIMEZONE`); o limite final é exclusivo no dia seguinte.
+- `/master/seguranca/postura`: as checagens de RLS/anon do projeto mãe foram substituídas por controles que existem na nova arquitetura
+  (hash scrypt, role do banco sem superusuário, bucket privado, reCAPTCHA, MFA, política de login). `resumoTabelas.comRls` = total (acesso só pela API).
+- `/master/seguranca/purgar-logs` devolve `{ acessos, acoes, auditoria }`, onde `auditoria` = registros de sessão (refresh tokens) expirados/revogados.
+- `POST /giro/etapas/iniciar|finalizar` aplicam as regras da tela operacional no servidor (enfermagem com sala livre; limpeza dentro do ciclo;
+  enfermagem só finaliza após a limpeza e com a próxima cirurgia) e mantêm `salas.status_atual/cirurgia_atual` na mesma transação.

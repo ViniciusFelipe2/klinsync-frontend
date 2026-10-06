@@ -49,6 +49,18 @@ Mudanças em relação ao projeto mãe:
 Push na `main` dispara [.github/workflows/deploy-frontend.yml](.github/workflows/deploy-frontend.yml): build → `s3 sync` → invalidação do CloudFront.
 Configuração única da AWS em [deploy/AWS.md](deploy/AWS.md).
 
+## Versionamento e espelho do GitHub no S3
+
+- **Versão semântica 100% automática:** a cada push na `main` o workflow lê as mensagens dos commits desde a última tag (padrão *Conventional Commits*) e decide o incremento:
+  `feat!:` ou `BREAKING CHANGE` → **major**, `feat:` → **minor**, qualquer outro (`fix:`, `docs:`, `chore:`...) → **patch**. Depois cria a tag `vX.Y.Z` e a **GitHub Release** com notas automáticas
+  (a primeira publicação é `v0.1.0`). Nenhuma ação manual é necessária; no disparo manual (Actions → Run workflow) dá para forçar `patch`/`minor`/`major`.
+  Reexecutar o workflow no mesmo commit reaproveita a versão já criada.
+- **Histórico no bucket:** o versionamento do S3 está ligado em `klinsync-frontend`; versões antigas e arquivos removidos ficam recuperáveis por **90 dias**
+  (regra de lifecycle `klinsync-expire-noncurrent-versions`). Para restaurar: `aws s3api list-object-versions --bucket klinsync-frontend --prefix <chave>`.
+- **Espelho exato:** o bucket reflete o build: arquivos removidos do repositório são removidos do S3. A ordem do envio evita janela quebrada
+  (assets novos → demais arquivos → `index.html` → remoção dos assets antigos). Abas abertas com a versão anterior podem pedir um recarregamento.
+- **Versão publicada:** `/version.json` no site traz `{ version, commit, builtAt }`.
+
 ## Pendências conhecidas
 
 - `src/assets/klinsync-logo.svg` é um **placeholder**: o PNG original só existia como referência de CDN da Lovable. Substitua por `klinsync-logo.png` (1010×300) e ajuste o import em `src/components/medsync/brand.tsx`.
