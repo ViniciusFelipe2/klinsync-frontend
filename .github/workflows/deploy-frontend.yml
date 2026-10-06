@@ -5,8 +5,9 @@ name: Deploy KlinSync Frontend (S3)
 #
 # Em Settings > Environments > develop (do repositório klinsync-frontend):
 #   Secret    AWS_ROLE_ARN_DEVELOP             ARN da role assumida via OIDC (AMZ-GITHUB)
-#   VITE_API_URL                               ex.: https://api.meudominio.com.br
-#                                              (pode ser Variable OU Secret; é um valor público)
+#   VITE_API_URL                               (opcional por enquanto) ex.: https://api.meudominio.com.br
+#                                              Pode ser Variable OU Secret; é um valor público.
+#                                              Sem ele o front é publicado, mas não consegue falar com a API.
 #   VITE_RECAPTCHA_SITE_KEY                    (opcional) Variable ou Secret
 #   Secret    AWS_CLOUDFRONT_DISTRIBUTION_ID   (opcional) invalida o cache após o deploy
 
@@ -53,13 +54,13 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "::error::VITE_API_URL não configurada. Crie-a como Variable ou Secret no ambiente develop do repositório klinsync-frontend (Settings > Environments > develop)"
-            exit 1
+            echo "::warning::VITE_API_URL não definida: o front será publicado sem URL da API (login e dados só funcionam depois que o backend tiver domínio)."
+          else
+            case "$VITE_API_URL" in
+              https://*) ;;
+              *) echo "::error::VITE_API_URL deve começar com https:// (valor recebido: $VITE_API_URL)"; exit 1 ;;
+            esac
           fi
-          case "$VITE_API_URL" in
-            https://*) ;;
-            *) echo "::error::VITE_API_URL deve começar com https:// (valor recebido: $VITE_API_URL)"; exit 1 ;;
-          esac
 
       - name: Build
         env:

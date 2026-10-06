@@ -4,7 +4,9 @@ const BASE_URL = ((import.meta.env["VITE_API_URL"] as string | undefined) ?? "")
 );
 
 if (!BASE_URL) {
-  console.error("[api] VITE_API_URL não configurada. Defina a URL da API no .env.");
+  console.warn(
+    "[api] VITE_API_URL não configurada: as chamadas à API vão para a mesma origem do site.",
+  );
 }
 
 const SESSION_KEY = "klinsync.session";
@@ -109,7 +111,7 @@ type Opcoes = {
 };
 
 function montarUrl(path: string, query?: Opcoes["query"]): string {
-  const url = new URL(`${BASE_URL}${path}`);
+  const url = new URL(`${BASE_URL}${path}`, window.location.origin);
   if (query) {
     for (const [k, v] of Object.entries(query)) {
       if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
