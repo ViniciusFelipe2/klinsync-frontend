@@ -1,0 +1,14 @@
+# MedSync — apenas a página pública é indexável.
+User-agent: *
+Allow: /$
+Disallow: /entrar
+Disallow: /app
+Disallow: /master
+Disallow: /master/
+Disallow: /hospital
+Disallow: /hospital/
+Disallow: /operacional
+Disallow: /check-in
+Disallow: /giro-sala
+Disallow: /convite
+Disallow: /api/
