@@ -3,11 +3,12 @@ name: Deploy KlinSync Frontend (S3)
 # Publica o build do front no bucket S3 klinsync-frontend (us-east-2).
 # Mesmo padrão do tf-vpc: ambiente develop + role vinda do secret AWS_ROLE_ARN_DEVELOP (OIDC).
 #
-# Secrets (Settings > Environments > develop):
-#   AWS_ROLE_ARN_DEVELOP             ARN da role assumida via OIDC (AMZ-GITHUB)
-#   VITE_API_URL                    ex.: https://api.meudominio.com.br
-#   VITE_RECAPTCHA_SITE_KEY          (opcional)
-#   AWS_CLOUDFRONT_DISTRIBUTION_ID   (opcional) invalida o cache após o deploy
+# Em Settings > Environments > develop (do repositório klinsync-frontend):
+#   Secret    AWS_ROLE_ARN_DEVELOP             ARN da role assumida via OIDC (AMZ-GITHUB)
+#   VITE_API_URL                               ex.: https://api.meudominio.com.br
+#                                              (pode ser Variable OU Secret; é um valor público)
+#   VITE_RECAPTCHA_SITE_KEY                    (opcional) Variable ou Secret
+#   Secret    AWS_CLOUDFRONT_DISTRIBUTION_ID   (opcional) invalida o cache após o deploy
 
 on:
   push:
@@ -49,14 +50,21 @@ jobs:
 
       - name: Validar variáveis de build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
         run: |
-          [ -n "$VITE_API_URL" ] || { echo "VITE_API_URL não configurada"; exit 1; }
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::error::VITE_API_URL não configurada. Crie-a como Variable ou Secret no ambiente develop do repositório klinsync-frontend (Settings > Environments > develop)"
+            exit 1
+          fi
+          case "$VITE_API_URL" in
+            https://*) ;;
+            *) echo "::error::VITE_API_URL deve começar com https:// (valor recebido: $VITE_API_URL)"; exit 1 ;;
+          esac
 
       - name: Build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ vars.VITE_RECAPTCHA_SITE_KEY || secrets.VITE_RECAPTCHA_SITE_KEY }}
         run: |
           npm run build
           test -f dist/index.html || { echo "dist/index.html não gerado"; exit 1; }
