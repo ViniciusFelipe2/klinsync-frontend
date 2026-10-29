@@ -85,7 +85,11 @@ export function SalaCard({
     }
     const ok = await executar(
       () =>
-        finalizarEtapaApi(evento.id, deviceId, evento.tipo_evento === "desmontagem" ? proxima : undefined),
+        finalizarEtapaApi(
+          evento.id,
+          deviceId,
+          evento.tipo_evento === "desmontagem" ? proxima : undefined,
+        ),
       `${ETAPA_LABEL[evento.tipo_evento]} finalizada`,
     );
     if (ok && evento.tipo_evento === "desmontagem") setProximaCirurgia("");

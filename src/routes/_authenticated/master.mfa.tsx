@@ -174,7 +174,10 @@ function PaginaMfa() {
           )}
 
           {!enroll ? (
-            <Button onClick={() => void iniciar()} disabled={ocupado || carregando || semCodigoAtual}>
+            <Button
+              onClick={() => void iniciar()}
+              disabled={ocupado || carregando || semCodigoAtual}
+            >
               {fatores.length > 0
                 ? "Adicionar outro aplicativo"
                 : "Ativar verificação em duas etapas"}

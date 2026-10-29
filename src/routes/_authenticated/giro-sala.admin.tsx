@@ -250,7 +250,9 @@ function Admin() {
   }, [giroFiltrado, paradasFiltradas, historico.data, nomeSala]);
 
   const baixar = (linhas: (string | number)[][], aba: string, arquivo: string) =>
-    baixarPlanilha(`${arquivo}-${de}-a-${ate}`, aba, linhas).catch(() => toast.error("Falha ao gerar a planilha."));
+    baixarPlanilha(`${arquivo}-${de}-a-${ate}`, aba, linhas).catch(() =>
+      toast.error("Falha ao gerar a planilha."),
+    );
 
   const exportarIndicadores = () =>
     baixar(

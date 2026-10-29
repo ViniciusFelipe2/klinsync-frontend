@@ -30,7 +30,11 @@ export const historicoGiro = (de: string, ate: string) =>
 
 /** O servidor registra o usuário (token) e a cirurgia anterior da sala. */
 export const iniciarEtapa = (salaId: string, tipo: TipoEvento, deviceId: string) =>
-  http.post<{ ok: true }>("/giro/etapas/iniciar", { salaId, tipo, deviceId: deviceId || undefined });
+  http.post<{ ok: true }>("/giro/etapas/iniciar", {
+    salaId,
+    tipo,
+    deviceId: deviceId || undefined,
+  });
 
 export const finalizarEtapa = (eventoId: string, deviceId: string, cirurgiaProxima?: string) =>
   http.post<{ ok: true }>("/giro/etapas/finalizar", {

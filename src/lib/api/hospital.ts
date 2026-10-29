@@ -53,8 +53,7 @@ export type LinhaGiro = {
 };
 
 export const giroDoHospital = endpointPost<
-  Parcial<{ salaId: string; etapa: "todas" | "desmontagem" | "limpeza" }> &
-    FiltroPagina,
+  Parcial<{ salaId: string; etapa: "todas" | "desmontagem" | "limpeza" }> & FiltroPagina,
   Pagina<LinhaGiro>
 >("/hospital/giro");
 

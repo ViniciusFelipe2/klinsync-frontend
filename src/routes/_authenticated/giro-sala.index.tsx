@@ -31,8 +31,7 @@ export const Route = createFileRoute("/_authenticated/giro-sala/")({
       { title: "Tela Operacional | Giro de Sala" },
       {
         name: "description",
-        content:
-          "Registre enfermagem e limpeza de cada sala cirúrgica com cronômetro ao vivo.",
+        content: "Registre enfermagem e limpeza de cada sala cirúrgica com cronômetro ao vivo.",
       },
       { property: "og:title", content: "Tela Operacional | Giro de Sala" },
       {

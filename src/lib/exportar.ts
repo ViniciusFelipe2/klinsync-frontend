@@ -17,7 +17,11 @@ export type Coluna<T> = {
  * Gera e baixa uma planilha .xlsx (exceljs). Textos entram sempre como texto, nunca como fórmula:
  * um nome começando com "=" não vira fórmula na planilha.
  */
-export async function baixarPlanilha(nomeArquivo: string, aba: string, linhas: (string | number)[][]) {
+export async function baixarPlanilha(
+  nomeArquivo: string,
+  aba: string,
+  linhas: (string | number)[][],
+) {
   const { default: ExcelJS } = await import("exceljs");
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(aba.slice(0, 31));
@@ -25,7 +29,9 @@ export async function baixarPlanilha(nomeArquivo: string, aba: string, linhas: (
   ws.getRow(1).font = { bold: true };
   const buffer = await wb.xlsx.writeBuffer();
   const url = URL.createObjectURL(
-    new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
   );
   const link = document.createElement("a");
   link.href = url;
