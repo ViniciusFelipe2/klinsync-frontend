@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { HospitalShell } from "@/components/medsync/hospital-shell";
+import { SalasAoVivo } from "@/components/medsync/salas-ao-vivo";
 import { TabelaDados, type Coluna } from "@/components/medsync/tabela-dados";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +107,7 @@ function ConteudoDashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["hospital-resumo"],
     queryFn: () => fetcher(),
+    refetchInterval: 60_000, // rede de segurança; as mudanças chegam na hora pelo canal em tempo real
   });
 
   const media = (s: number | null) => (s == null ? "—" : formatDuracao(s));
@@ -143,6 +145,8 @@ function ConteudoDashboard() {
         <p className="text-sm text-muted-foreground">Carregando indicadores...</p>
       ) : (
         <div className="space-y-8">
+          <SalasAoVivo />
+
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Indicador
               rotulo="Check-ins hoje"

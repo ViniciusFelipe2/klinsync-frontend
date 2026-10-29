@@ -43,7 +43,11 @@ function PaginaMfa() {
   const [carregando, setCarregando] = useState(true);
   const [enroll, setEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null);
   const [codigo, setCodigo] = useState("");
+  /** Código atual do autenticador: reautenticação para adicionar ou remover um fator. */
+  const [codigoAtual, setCodigoAtual] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const exigeCodigoAtual = fatores.length > 0;
+  const semCodigoAtual = exigeCodigoAtual && codigoAtual.length !== 6;
 
   async function recarregar() {
     setCarregando(true);
@@ -65,7 +69,11 @@ function PaginaMfa() {
   async function iniciar() {
     setOcupado(true);
     try {
-      const data = await iniciarCadastroMfa(`Trizion ${new Date().toLocaleDateString("pt-BR")}`);
+      const data = await iniciarCadastroMfa(
+        `Trizion ${new Date().toLocaleDateString("pt-BR")}`,
+        exigeCodigoAtual ? codigoAtual : undefined,
+      );
+      setCodigoAtual("");
       setEnroll({ id: data.id, qr: data.qr, secret: data.secret });
       setCodigo("");
     } catch (err) {
@@ -94,7 +102,8 @@ function PaginaMfa() {
   async function remover(id: string) {
     setOcupado(true);
     try {
-      await removerFatorMfa(id);
+      await removerFatorMfa(id, codigoAtual);
+      setCodigoAtual("");
       toast.success("Fator removido.");
       await recarregar();
     } catch (err) {
@@ -135,7 +144,7 @@ function PaginaMfa() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={ocupado}
+                    disabled={ocupado || semCodigoAtual}
                     onClick={() => void remover(f.id)}
                   >
                     Remover
@@ -145,8 +154,27 @@ function PaginaMfa() {
             </ul>
           )}
 
+          {exigeCodigoAtual && !enroll && (
+            <div className="max-w-xs space-y-2">
+              <Label htmlFor="codigo-atual-mfa">Código atual do aplicativo</Label>
+              <Input
+                id="codigo-atual-mfa"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={codigoAtual}
+                onChange={(e) => setCodigoAtual(e.target.value.replace(/D/g, "").slice(0, 6))}
+                placeholder="000000"
+              />
+              <p className="text-xs text-muted-foreground">
+                Para remover ou adicionar um aplicativo, confirme com um código válido. Cada código
+                vale uma vez: se acabou de usá-lo para entrar, aguarde o próximo.
+              </p>
+            </div>
+          )}
+
           {!enroll ? (
-            <Button onClick={() => void iniciar()} disabled={ocupado || carregando}>
+            <Button onClick={() => void iniciar()} disabled={ocupado || carregando || semCodigoAtual}>
               {fatores.length > 0
                 ? "Adicionar outro aplicativo"
                 : "Ativar verificação em duas etapas"}

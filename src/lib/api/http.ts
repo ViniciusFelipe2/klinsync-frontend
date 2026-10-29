@@ -1,4 +1,4 @@
-const BASE_URL = ((import.meta.env["VITE_API_URL"] as string | undefined) ?? "").replace(
+export const BASE_URL = ((import.meta.env["VITE_API_URL"] as string | undefined) ?? "").replace(
   /\/+$/,
   "",
 );
@@ -61,35 +61,59 @@ export function limparSessao(): void {
 
 /* ---------------- Renovação do token ---------------- */
 
-let renovando: Promise<boolean> | null = null;
+export type ResultadoRenovacao = "ok" | "invalida" | "rede";
 
-/** Troca o refresh token por um novo par de tokens. Chamadas simultâneas compartilham a mesma requisição. */
-export function renovarSessao(): Promise<boolean> {
+let renovando: Promise<ResultadoRenovacao> | null = null;
+
+/** Executa `fn` com exclusividade entre abas/janelas do mesmo navegador (Web Locks), quando disponível. */
+function comTrava<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  return locks ? (locks.request("klinsync-renovar-sessao", fn) as Promise<T>) : fn();
+}
+
+/**
+ * Troca o refresh token por um novo par de tokens. Chamadas simultâneas compartilham a mesma requisição.
+ * Só devolve "invalida" (e apaga a sessão) quando o servidor REJEITA o token. Falha de rede, servidor
+ * indisponível ou limite de requisições devolvem "rede": a sessão é mantida e a renovação é tentada de novo.
+ * Era aqui que o tablet "deslogava" depois de acordar com o Wi-Fi ainda reconectando.
+ */
+export function renovarSessaoDetalhe(): Promise<ResultadoRenovacao> {
   if (renovando) return renovando;
-  const atual = getSessao();
-  if (!atual) return Promise.resolve(false);
+  const inicial = getSessao();
+  if (!inicial) return Promise.resolve("invalida");
 
-  renovando = (async () => {
+  renovando = comTrava(async (): Promise<ResultadoRenovacao> => {
+    const atual = getSessao();
+    if (!atual) return "invalida";
+    // Outra aba pode ter renovado enquanto esperávamos a vez: o token guardado mudou, então já está feito.
+    if (atual.refreshToken !== inicial.refreshToken) return "ok";
     try {
       const res = await fetch(`${BASE_URL}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refreshToken: atual.refreshToken }),
       });
-      if (!res.ok) {
-        limparSessao();
-        return false;
+      if (res.ok) {
+        salvarSessao((await res.json()) as Sessao);
+        return "ok";
       }
-      salvarSessao((await res.json()) as Sessao);
-      return true;
+      if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422) {
+        limparSessao();
+        return "invalida";
+      }
+      return "rede";
     } catch {
-      // Falha de rede: mantém a sessão atual, o aparelho pode estar apenas offline.
-      return false;
-    } finally {
-      renovando = null;
+      return "rede";
     }
-  })();
+  }).finally(() => {
+    renovando = null;
+  });
   return renovando;
+}
+
+/** Compatibilidade: `true` se a sessão foi renovada. */
+export async function renovarSessao(): Promise<boolean> {
+  return (await renovarSessaoDetalhe()) === "ok";
 }
 
 /** Garante que o access token ainda vale por pelo menos `margemMs`; renova se necessário. */
@@ -97,7 +121,7 @@ export async function garantirSessaoValida(margemMs = 60_000): Promise<boolean> 
   const sessao = getSessao();
   if (!sessao) return false;
   if (sessao.expiresAt * 1000 - Date.now() > margemMs) return true;
-  return renovarSessao();
+  return (await renovarSessaoDetalhe()) === "ok";
 }
 
 /* ---------------- Requisições ---------------- */
@@ -165,8 +189,12 @@ async function request<T>(
   }
 
   if (res.status === 401 && comAuth) {
-    if (!jaRenovou && (await renovarSessao())) {
-      return request<T>(metodo, path, body, opcoes, true);
+    if (!jaRenovou) {
+      const r = await renovarSessaoDetalhe();
+      if (r === "ok") return request<T>(metodo, path, body, opcoes, true);
+      // Sem conexão estável não é motivo para sair: mantém a sessão e deixa a tela tentar de novo.
+      if (r === "rede")
+        throw new ApiError("Sem conexão estável com o servidor. Tentando novamente...", 0);
     }
     limparSessao();
     irParaLogin();

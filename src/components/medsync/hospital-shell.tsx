@@ -17,6 +17,7 @@ import { TrizionMark } from "@/components/medsync/brand";
 import { RodapeTrizion } from "@/components/medsync/rodape";
 import { Button } from "@/components/ui/button";
 import { useSessao } from "@/hooks/use-sessao";
+import { useEstadoTempoReal } from "@/hooks/use-tempo-real";
 import { sair as encerrarSessao } from "@/lib/api/auth";
 
 const ITENS = [
@@ -42,6 +43,7 @@ export function HospitalShell({
   const { data } = useSessao();
   const queryClient = useQueryClient();
   const [menuAberto, setMenuAberto] = useState(false);
+  const aoVivo = useEstadoTempoReal();
 
   async function sair() {
     await queryClient.cancelQueries();
@@ -107,9 +109,27 @@ export function HospitalShell({
       </aside>
 
       <main className="min-w-0 flex-1">
-        <header className="border-b border-border px-6 py-6">
-          <h1 className="text-2xl font-semibold text-foreground">{titulo}</h1>
-          {subtitulo ? <p className="mt-1 text-sm text-muted-foreground">{subtitulo}</p> : null}
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-6 py-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">{titulo}</h1>
+            {subtitulo ? <p className="mt-1 text-sm text-muted-foreground">{subtitulo}</p> : null}
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className="flex items-center gap-2 text-xs text-muted-foreground"
+              role="status"
+              title={
+                aoVivo === "ao-vivo"
+                  ? "Recebendo atualizações em tempo real"
+                  : "Sem conexão em tempo real. Tentando reconectar; a tela continua se atualizando a cada poucos segundos."
+              }
+            >
+              <span
+                className={`size-2.5 rounded-full ${aoVivo === "ao-vivo" ? "animate-pulse bg-emerald-500" : "bg-amber-500"}`}
+              />
+              {aoVivo === "ao-vivo" ? "Ao vivo" : "Reconectando..."}
+            </span>
+          </div>
         </header>
         <div className="px-6 py-6">{children}</div>
         <RodapeTrizion />

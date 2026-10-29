@@ -13,20 +13,32 @@ export type Coluna<T> = {
   render?: (linha: T) => ReactNode;
 };
 
-function matriz<T>(colunas: Coluna<T>[], linhas: T[]) {
-  return linhas.map((l) => {
-    const obj: Record<string, string | number> = {};
-    for (const c of colunas) obj[c.titulo] = c.valor(l);
-    return obj;
-  });
+/**
+ * Gera e baixa uma planilha .xlsx (exceljs). Textos entram sempre como texto, nunca como fórmula:
+ * um nome começando com "=" não vira fórmula na planilha.
+ */
+export async function baixarPlanilha(nomeArquivo: string, aba: string, linhas: (string | number)[][]) {
+  const { default: ExcelJS } = await import("exceljs");
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet(aba.slice(0, 31));
+  for (const l of linhas) ws.addRow(l);
+  ws.getRow(1).font = { bold: true };
+  const buffer = await wb.xlsx.writeBuffer();
+  const url = URL.createObjectURL(
+    new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${nomeArquivo}.xlsx`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function exportarExcel<T>(nomeArquivo: string, colunas: Coluna<T>[], linhas: T[]) {
-  const XLSX = await import("xlsx");
-  const ws = XLSX.utils.json_to_sheet(matriz(colunas, linhas));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Dados");
-  XLSX.writeFile(wb, `${nomeArquivo}.xlsx`);
+  await baixarPlanilha(nomeArquivo, "Dados", [
+    colunas.map((c) => c.titulo),
+    ...linhas.map((l) => colunas.map((c) => c.valor(l))),
+  ]);
 }
 
 export async function exportarPdf<T>(

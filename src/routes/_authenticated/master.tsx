@@ -36,6 +36,7 @@ function MasterLayout() {
           { to: "/master/usuarios", label: "Usuários" },
           { to: "/master/convites", label: "Convites" },
           { to: "/master/permissoes", label: "Permissões" },
+          { to: "/master/observabilidade", label: "Observabilidade" },
           { to: "/master/auditoria", label: "Segurança e auditoria" },
           { to: "/master/mfa", label: "Verificação em 2 etapas" },
         ]}

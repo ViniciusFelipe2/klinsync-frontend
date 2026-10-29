@@ -29,20 +29,21 @@ export const historicoGiro = (de: string, ate: string) =>
 /* ---------------- Operação das salas ---------------- */
 
 /** O servidor registra o usuário (token) e a cirurgia anterior da sala. */
-export const iniciarEtapa = (salaId: string, tipo: TipoEvento) =>
-  http.post<{ ok: true }>("/giro/etapas/iniciar", { salaId, tipo });
+export const iniciarEtapa = (salaId: string, tipo: TipoEvento, deviceId: string) =>
+  http.post<{ ok: true }>("/giro/etapas/iniciar", { salaId, tipo, deviceId: deviceId || undefined });
 
-export const finalizarEtapa = (eventoId: string, cirurgiaProxima?: string) =>
+export const finalizarEtapa = (eventoId: string, deviceId: string, cirurgiaProxima?: string) =>
   http.post<{ ok: true }>("/giro/etapas/finalizar", {
     eventoId,
+    deviceId: deviceId || undefined,
     ...(cirurgiaProxima ? { cirurgiaProxima } : {}),
   });
 
-export const iniciarParada = (salaId: string) =>
-  http.post<{ ok: true }>("/giro/paradas/iniciar", { salaId });
+export const iniciarParada = (salaId: string, deviceId: string) =>
+  http.post<{ ok: true }>("/giro/paradas/iniciar", { salaId, deviceId: deviceId || undefined });
 
-export const finalizarParada = (paradaId: string) =>
-  http.post<{ ok: true }>("/giro/paradas/finalizar", { paradaId });
+export const finalizarParada = (paradaId: string, deviceId: string) =>
+  http.post<{ ok: true }>("/giro/paradas/finalizar", { paradaId, deviceId: deviceId || undefined });
 
 /* ---------------- Vínculo sala <-> tablet ---------------- */
 

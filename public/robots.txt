@@ -1,4 +1,4 @@
-# MedSync — apenas a página pública é indexável.
+# KlinSync — apenas a página pública é indexável.
 User-agent: *
 Allow: /$
 Disallow: /entrar

@@ -15,13 +15,11 @@ export function getDeviceId(): string {
 }
 
 /**
- * Ambiente de desenvolvimento/visualização (localhost ou dentro de iframe).
- * Nesses casos o app entra em modo visualização e não reserva sala.
+ * Modo visualização: só dentro de iframe (ex.: painel embutido). Em localhost o app
+ * reserva a sala normalmente, para que o vínculo sala/tablet possa ser testado.
+ * O servidor exige o tablet vinculado de qualquer forma.
  */
 export function isPreviewEnvironment(): boolean {
   if (typeof window === "undefined") return false;
-  const emIframe = window.self !== window.top;
-  const host = window.location.hostname;
-  const hostPreview = host === "localhost" || host === "127.0.0.1";
-  return emIframe || hostPreview;
+  return window.self !== window.top;
 }

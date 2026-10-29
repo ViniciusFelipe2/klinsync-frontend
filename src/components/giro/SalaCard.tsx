@@ -31,10 +31,13 @@ const toneClasses: Record<"livre" | "processo" | "parada", string> = {
 
 export function SalaCard({
   sala,
+  deviceId,
   eventos,
   paradaAberta,
 }: {
   sala: Sala;
+  /** Tablet vinculado à sala: o servidor só aceita operações vindas dele. */
+  deviceId: string;
   eventos: EventoGiro[];
   paradaAberta: EventoParada | null;
 }) {
@@ -72,7 +75,7 @@ export function SalaCard({
 
   // O servidor identifica o usuário pelo token e registra a cirurgia anterior da sala.
   const iniciarEtapa = (tipo: TipoEvento) =>
-    executar(() => iniciarEtapaApi(sala.id, tipo), `${ETAPA_LABEL[tipo]} iniciada`);
+    executar(() => iniciarEtapaApi(sala.id, tipo, deviceId), `${ETAPA_LABEL[tipo]} iniciada`);
 
   const finalizarEtapa = async (evento: EventoGiro) => {
     const proxima = proximaCirurgia.trim();
@@ -82,7 +85,7 @@ export function SalaCard({
     }
     const ok = await executar(
       () =>
-        finalizarEtapaApi(evento.id, evento.tipo_evento === "desmontagem" ? proxima : undefined),
+        finalizarEtapaApi(evento.id, deviceId, evento.tipo_evento === "desmontagem" ? proxima : undefined),
       `${ETAPA_LABEL[evento.tipo_evento]} finalizada`,
     );
     if (ok && evento.tipo_evento === "desmontagem") setProximaCirurgia("");
@@ -90,9 +93,9 @@ export function SalaCard({
 
   const alternarParada = () => {
     if (paradaAberta) {
-      return executar(() => finalizarParada(paradaAberta.id), "Sala liberada");
+      return executar(() => finalizarParada(paradaAberta.id, deviceId), "Sala liberada");
     }
-    return executar(() => iniciarParada(sala.id), "Sala marcada como parada");
+    return executar(() => iniciarParada(sala.id, deviceId), "Sala marcada como parada");
   };
 
   // Regras:

@@ -29,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/hospital/giro-sala")({
       { title: "Relatório de Giro de Sala | KlinSync" },
       {
         name: "description",
-        content: "Histórico de desmontagem, limpeza e remontagem das salas cirúrgicas do hospital.",
+        content: "Histórico de enfermagem, limpeza e paradas das salas cirúrgicas do hospital.",
       },
       { property: "og:title", content: "Relatório de Giro de Sala | KlinSync" },
       {
         property: "og:description",
-        content: "Histórico de desmontagem, limpeza e remontagem das salas cirúrgicas do hospital.",
+        content: "Histórico de enfermagem, limpeza e paradas das salas cirúrgicas do hospital.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -82,7 +82,7 @@ function RelatorioGiro() {
   const fetcher = giroDoHospital;
   const fetchSalas = salasDoHospital;
   const [salaId, setSalaId] = useState("todas");
-  const [etapa, setEtapa] = useState<"todas" | "desmontagem" | "limpeza" | "remontagem">("todas");
+  const [etapa, setEtapa] = useState<"todas" | "desmontagem" | "limpeza">("todas");
   const [de, setDe] = useState("");
   const [ate, setAte] = useState("");
   const [pagina, setPagina] = useState(1);
@@ -165,7 +165,6 @@ function RelatorioGiro() {
                       <SelectItem value="todas">Todas as etapas</SelectItem>
                       <SelectItem value="desmontagem">Enfermagem</SelectItem>
                       <SelectItem value="limpeza">Limpeza</SelectItem>
-                      <SelectItem value="remontagem">Remontagem</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

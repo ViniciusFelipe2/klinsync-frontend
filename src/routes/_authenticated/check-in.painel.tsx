@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { EVENTO_TEMPO_REAL } from "@/hooks/use-tempo-real";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -148,11 +149,19 @@ function AdminPanel() {
   }, [fetchUsage]);
 
   useEffect(() => {
-    // Sem canal em tempo real: o painel se atualiza por polling enquanto a aba está visível.
+    // Novo check-in (ou reconexão) chega na hora pelo canal em tempo real; o intervalo é só rede de segurança.
+    const aoAviso = (e: Event) => {
+      const tipo = (e as CustomEvent<string>).detail;
+      if (tipo === "checkin" || tipo === "reconectado") void load();
+    };
+    window.addEventListener(EVENTO_TEMPO_REAL, aoAviso);
     const id = window.setInterval(() => {
       if (document.visibilityState === "visible") void load();
-    }, 15_000);
-    return () => window.clearInterval(id);
+    }, 30_000);
+    return () => {
+      window.removeEventListener(EVENTO_TEMPO_REAL, aoAviso);
+      window.clearInterval(id);
+    };
   }, [load]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PAGE_SIZE)), [total]);

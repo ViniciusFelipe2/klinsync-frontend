@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/giro-sala/")({
       {
         name: "description",
         content:
-          "Registre desmontagem, limpeza e remontagem de cada sala cirúrgica com cronômetro ao vivo.",
+          "Registre enfermagem e limpeza de cada sala cirúrgica com cronômetro ao vivo.",
       },
       { property: "og:title", content: "Tela Operacional | Giro de Sala" },
       {
@@ -194,6 +194,7 @@ function Operacional() {
               <SalaCard
                 key={sala.id}
                 sala={sala}
+                deviceId={deviceId}
                 eventos={(eventos.data ?? []).filter((e) => e.sala_id === sala.id)}
                 paradaAberta={(paradas.data ?? []).find((p) => p.sala_id === sala.id) ?? null}
               />

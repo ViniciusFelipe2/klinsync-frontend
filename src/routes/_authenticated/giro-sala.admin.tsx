@@ -4,8 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
 import { historicoGiro } from "@/lib/api/giro";
+import { baixarPlanilha } from "@/lib/exportar";
 import { Cronometro } from "@/components/giro/Cronometro";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -249,11 +249,8 @@ function Admin() {
     return itens.sort((a, b) => b.inicio.localeCompare(a.inicio));
   }, [giroFiltrado, paradasFiltradas, historico.data, nomeSala]);
 
-  const baixar = (linhas: (string | number)[][], aba: string, arquivo: string) => {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(linhas), aba);
-    XLSX.writeFile(wb, `${arquivo}-${de}-a-${ate}.xlsx`);
-  };
+  const baixar = (linhas: (string | number)[][], aba: string, arquivo: string) =>
+    baixarPlanilha(`${arquivo}-${de}-a-${ate}`, aba, linhas).catch(() => toast.error("Falha ao gerar a planilha."));
 
   const exportarIndicadores = () =>
     baixar(

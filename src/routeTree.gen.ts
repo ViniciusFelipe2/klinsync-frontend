@@ -35,6 +35,7 @@ import { Route as AuthenticatedMasterConvitesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMasterFeaturesRouteImport } from './routes/_authenticated/master.features'
 import { Route as AuthenticatedMasterHospitaisRouteImport } from './routes/_authenticated/master.hospitais'
 import { Route as AuthenticatedMasterMfaRouteImport } from './routes/_authenticated/master.mfa'
+import { Route as AuthenticatedMasterObservabilidadeRouteImport } from './routes/_authenticated/master.observabilidade'
 import { Route as AuthenticatedMasterPermissoesRouteImport } from './routes/_authenticated/master.permissoes'
 import { Route as AuthenticatedMasterUsuariosRouteImport } from './routes/_authenticated/master.usuarios'
 
@@ -183,6 +184,12 @@ const AuthenticatedMasterMfaRoute = AuthenticatedMasterMfaRouteImport.update({
   path: '/mfa',
   getParentRoute: () => AuthenticatedMasterRoute,
 } as any)
+const AuthenticatedMasterObservabilidadeRoute =
+  AuthenticatedMasterObservabilidadeRouteImport.update({
+    id: '/observabilidade',
+    path: '/observabilidade',
+    getParentRoute: () => AuthenticatedMasterRoute,
+  } as any)
 const AuthenticatedMasterPermissoesRoute =
   AuthenticatedMasterPermissoesRouteImport.update({
     id: '/permissoes',
@@ -218,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/master/features': typeof AuthenticatedMasterFeaturesRoute
   '/master/hospitais': typeof AuthenticatedMasterHospitaisRoute
   '/master/mfa': typeof AuthenticatedMasterMfaRoute
+  '/master/observabilidade': typeof AuthenticatedMasterObservabilidadeRoute
   '/master/permissoes': typeof AuthenticatedMasterPermissoesRoute
   '/master/usuarios': typeof AuthenticatedMasterUsuariosRoute
   '/check-in/': typeof AuthenticatedCheckInIndexRoute
@@ -243,6 +251,7 @@ export interface FileRoutesByTo {
   '/master/features': typeof AuthenticatedMasterFeaturesRoute
   '/master/hospitais': typeof AuthenticatedMasterHospitaisRoute
   '/master/mfa': typeof AuthenticatedMasterMfaRoute
+  '/master/observabilidade': typeof AuthenticatedMasterObservabilidadeRoute
   '/master/permissoes': typeof AuthenticatedMasterPermissoesRoute
   '/master/usuarios': typeof AuthenticatedMasterUsuariosRoute
   '/check-in': typeof AuthenticatedCheckInIndexRoute
@@ -274,6 +283,7 @@ export interface FileRoutesById {
   '/_authenticated/master/features': typeof AuthenticatedMasterFeaturesRoute
   '/_authenticated/master/hospitais': typeof AuthenticatedMasterHospitaisRoute
   '/_authenticated/master/mfa': typeof AuthenticatedMasterMfaRoute
+  '/_authenticated/master/observabilidade': typeof AuthenticatedMasterObservabilidadeRoute
   '/_authenticated/master/permissoes': typeof AuthenticatedMasterPermissoesRoute
   '/_authenticated/master/usuarios': typeof AuthenticatedMasterUsuariosRoute
   '/_authenticated/check-in/': typeof AuthenticatedCheckInIndexRoute
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/master/features'
     | '/master/hospitais'
     | '/master/mfa'
+    | '/master/observabilidade'
     | '/master/permissoes'
     | '/master/usuarios'
     | '/check-in/'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/master/features'
     | '/master/hospitais'
     | '/master/mfa'
+    | '/master/observabilidade'
     | '/master/permissoes'
     | '/master/usuarios'
     | '/check-in'
@@ -360,6 +372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/master/features'
     | '/_authenticated/master/hospitais'
     | '/_authenticated/master/mfa'
+    | '/_authenticated/master/observabilidade'
     | '/_authenticated/master/permissoes'
     | '/_authenticated/master/usuarios'
     | '/_authenticated/check-in/'
@@ -559,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMasterMfaRouteImport
       parentRoute: typeof AuthenticatedMasterRoute
     }
+    '/_authenticated/master/observabilidade': {
+      id: '/_authenticated/master/observabilidade'
+      path: '/observabilidade'
+      fullPath: '/master/observabilidade'
+      preLoaderRoute: typeof AuthenticatedMasterObservabilidadeRouteImport
+      parentRoute: typeof AuthenticatedMasterRoute
+    }
     '/_authenticated/master/permissoes': {
       id: '/_authenticated/master/permissoes'
       path: '/permissoes'
@@ -633,6 +653,7 @@ interface AuthenticatedMasterRouteChildren {
   AuthenticatedMasterFeaturesRoute: typeof AuthenticatedMasterFeaturesRoute
   AuthenticatedMasterHospitaisRoute: typeof AuthenticatedMasterHospitaisRoute
   AuthenticatedMasterMfaRoute: typeof AuthenticatedMasterMfaRoute
+  AuthenticatedMasterObservabilidadeRoute: typeof AuthenticatedMasterObservabilidadeRoute
   AuthenticatedMasterPermissoesRoute: typeof AuthenticatedMasterPermissoesRoute
   AuthenticatedMasterUsuariosRoute: typeof AuthenticatedMasterUsuariosRoute
   AuthenticatedMasterIndexRoute: typeof AuthenticatedMasterIndexRoute
@@ -644,6 +665,8 @@ const AuthenticatedMasterRouteChildren: AuthenticatedMasterRouteChildren = {
   AuthenticatedMasterFeaturesRoute: AuthenticatedMasterFeaturesRoute,
   AuthenticatedMasterHospitaisRoute: AuthenticatedMasterHospitaisRoute,
   AuthenticatedMasterMfaRoute: AuthenticatedMasterMfaRoute,
+  AuthenticatedMasterObservabilidadeRoute:
+    AuthenticatedMasterObservabilidadeRoute,
   AuthenticatedMasterPermissoesRoute: AuthenticatedMasterPermissoesRoute,
   AuthenticatedMasterUsuariosRoute: AuthenticatedMasterUsuariosRoute,
   AuthenticatedMasterIndexRoute: AuthenticatedMasterIndexRoute,

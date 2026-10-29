@@ -75,11 +75,16 @@ export type FatorMfa = { id: string; status: string; friendly_name?: string | nu
 
 export const listarFatoresMfa = () => http.get<FatorMfa[]>("/auth/mfa/factors");
 
-export const iniciarCadastroMfa = (friendlyName: string) =>
-  http.post<{ id: string; qr: string; secret: string }>("/auth/mfa/enroll", { friendlyName });
+/** `code`: código atual do autenticador; obrigatório quando a conta já tem um fator ativo (reautenticação). */
+export const iniciarCadastroMfa = (friendlyName: string, code?: string) =>
+  http.post<{ id: string; qr: string; secret: string }>("/auth/mfa/enroll", {
+    friendlyName,
+    ...(code ? { code } : {}),
+  });
 
 export const confirmarCadastroMfa = (factorId: string, code: string) =>
   http.post<{ ok: true }>("/auth/mfa/enroll/confirm", { factorId, code });
 
-export const removerFatorMfa = (factorId: string) =>
-  http.delete<{ ok: true }>(`/auth/mfa/factors/${encodeURIComponent(factorId)}`);
+/** Remover um fator ativo exige o código atual do autenticador (um token roubado não basta). */
+export const removerFatorMfa = (factorId: string, code: string) =>
+  http.post<{ ok: true }>("/auth/mfa/factors/remover", { factorId, code });
