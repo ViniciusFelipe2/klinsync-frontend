@@ -27,7 +27,11 @@ export async function baixarPlanilha(
   const ws = wb.addWorksheet(aba.slice(0, 31));
   for (const l of linhas) ws.addRow(l);
   ws.getRow(1).font = { bold: true };
-  const buffer = await wb.xlsx.writeBuffer();
+  baixarXlsx(nomeArquivo, await wb.xlsx.writeBuffer());
+}
+
+/** Dispara o download de um .xlsx já gerado. */
+export function baixarXlsx(nomeArquivo: string, buffer: ArrayBuffer) {
   const url = URL.createObjectURL(
     new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

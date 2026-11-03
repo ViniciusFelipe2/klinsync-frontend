@@ -50,6 +50,9 @@ export type LinhaGiro = {
   cirurgia_anterior: string | null;
   cirurgia_proxima: string | null;
   sala: string;
+  /** Nome (ou e-mail) de quem iniciou / finalizou no tablet. */
+  usuario_inicio?: string | null;
+  usuario_fim?: string | null;
 };
 
 export const giroDoHospital = endpointPost<
@@ -98,6 +101,63 @@ export const estatisticasGiroHospital = endpointPost<
     }[];
   }
 >("/hospital/giro/estatisticas");
+
+/** Quantidade, soma e média (em segundos) de um tipo de evento no período. */
+export type BlocoTempo = { quantidade: number; total: number; media: number | null };
+
+export type AgregadoGiro = {
+  enfermagem: BlocoTempo;
+  limpeza: BlocoTempo;
+  giroTotal: BlocoTempo;
+  paradas: BlocoTempo;
+  /** Registros finalizados com duração abaixo do limite de conferência (30 s). */
+  aRevisar: number;
+};
+
+export type IndicadoresGiro = {
+  registros: number;
+  concluidos: number;
+  emAndamento: number;
+  aRevisar: number;
+  salasMonitoradas: number;
+  limiteRevisaoSegundos: number;
+};
+
+/** Por dia: volume de registros (inclui em andamento) e, dos concluídos, quantidade e média por etapa. */
+export type RegistrosDoDia = {
+  dia: string;
+  enfermagem: number;
+  limpeza: number;
+  total: number;
+  enfermagemConcluidos: number;
+  mediaEnfermagem: number | null;
+  limpezaConcluidos: number;
+  mediaLimpeza: number | null;
+};
+
+export type SalaNoPeriodo = AgregadoGiro & {
+  id: string;
+  nome: string;
+  ativa: boolean;
+  statusAtual: string;
+  paradaDesde: string | null;
+  emAndamento: { tipo: string; desde: string } | null;
+};
+
+/**
+ * Resumo do período por sala + linha de total. Só eventos finalizados que começaram no período
+ * entram nas somas; o que está em andamento vem em `paradaDesde`/`emAndamento`.
+ */
+export const giroPorSalaHospital = endpointPost<
+  Parcial<{ salaId: string; de: string; ate: string }>,
+  {
+    periodo: { de: string; ate: string };
+    indicadores: IndicadoresGiro;
+    salas: SalaNoPeriodo[];
+    total: AgregadoGiro;
+    porDia: RegistrosDoDia[];
+  }
+>("/hospital/giro/por-sala");
 
 export type LinhaParada = {
   id: string;

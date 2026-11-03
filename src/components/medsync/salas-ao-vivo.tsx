@@ -19,7 +19,7 @@ const ESTILO: Record<Situacao, { tile: string; ponto: string }> = {
  * (paradas e em andamento) vem primeiro e as livres ficam discretas. Atualiza sozinho pelo canal em tempo real.
  * Fica oculto se o hospital não contratou o giro de sala.
  */
-export function SalasAoVivo() {
+export function SalasAoVivo({ salaId = "todas" }: { salaId?: string } = {}) {
   const salas = useSalas();
   const eventos = useEventosAbertos();
   const paradas = useParadasAbertas();
@@ -28,6 +28,7 @@ export function SalasAoVivo() {
   const itens = useMemo(() => {
     const ordem: Record<Situacao, number> = { parada: 0, processo: 1, livre: 2 };
     return (salas.data ?? [])
+      .filter((sala) => salaId === "todas" || sala.id === salaId)
       .map((sala) => {
         const parada = (paradas.data ?? []).find((p) => p.sala_id === sala.id);
         const aberta = (eventos.data ?? []).find((e) => e.sala_id === sala.id && !e.fim);
@@ -38,7 +39,7 @@ export function SalasAoVivo() {
             : "livre";
         const inicio = parada?.inicio ?? aberta?.inicio ?? null;
         const rotulo = parada
-          ? "Parada"
+          ? `Parada desde ${new Date(parada.inicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
           : situacao === "processo"
             ? ETAPA_LABEL[sala.status_atual as keyof typeof ETAPA_LABEL]
             : "Livre";
@@ -55,7 +56,7 @@ export function SalasAoVivo() {
           ordem[a.situacao] - ordem[b.situacao] ||
           a.sala.nome.localeCompare(b.sala.nome, "pt-BR", { numeric: true }),
       );
-  }, [salas.data, eventos.data, paradas.data]);
+  }, [salas.data, eventos.data, paradas.data, salaId]);
 
   if (salas.isError || !salas.data || salas.data.length === 0) return null; // sem módulo ou sem salas
 
@@ -66,7 +67,12 @@ export function SalasAoVivo() {
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="text-base">Salas agora</CardTitle>
+        <div>
+          <CardTitle className="text-base">Salas agora</CardTitle>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Situação neste instante (não depende do período). Paradas aparecem primeiro.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <i className={`size-2 rounded-full ${ESTILO.livre.ponto}`} />

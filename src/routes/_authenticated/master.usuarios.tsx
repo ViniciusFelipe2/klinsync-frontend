@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { REGRA_SENHA, senhaEhForte } from "@/lib/senha";
+import { REGRA_SENHA, gerarSenhaForte, senhaEhForte } from "@/lib/senha";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -206,6 +206,35 @@ function Usuarios() {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
               />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSenha(gerarSenhaForte());
+                    toast.success("Senha forte gerada. Copie e envie ao usuário.");
+                  }}
+                >
+                  Gerar senha forte
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!senha}
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(senha)
+                      .then(() => toast.success("Senha copiada."))
+                      .catch(() =>
+                        toast.error("Não foi possível copiar. Selecione e copie manualmente."),
+                      );
+                  }}
+                >
+                  Copiar
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">{REGRA_SENHA}</p>
             </div>
             <div className="space-y-1.5">

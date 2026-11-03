@@ -51,6 +51,18 @@ export const salvarHospital = endpointPost<
   { id: string }
 >("/master/hospitais/salvar");
 
+/** Desativa ("inativo"/"inadimplente") ou reativa ("ativo") o hospital; a equipe dele perde/recupera o acesso. */
+export const alterarStatusHospital = endpointPost<
+  { id: string; status: "ativo" | "inativo" | "inadimplente" },
+  { ok: true }
+>("/master/hospitais/status");
+
+/** Exclui o hospital e todos os seus dados (irreversível). Exige hospital desativado e o nome de volta. */
+export const excluirHospital = endpointPost<
+  { id: string; confirmarNome: string },
+  { ok: true; fotosNaoRemovidas: number }
+>("/master/hospitais/excluir");
+
 export const alternarFeature = endpointPost<
   { tenantId: string; featureId: string; habilitada: boolean },
   { ok: true }

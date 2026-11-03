@@ -182,41 +182,41 @@ export function SalaCard({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:gap-3">
         <Button
           size="lg"
-          className="h-14 whitespace-normal bg-enfermagem px-2 text-xs leading-tight font-semibold sm:h-16 text-enfermagem-foreground hover:bg-enfermagem/90 sm:text-base"
+          className="flex h-auto min-h-28 flex-col items-center justify-center gap-2 whitespace-normal rounded-xl bg-enfermagem px-3 py-4 text-center text-base leading-tight font-bold text-enfermagem-foreground hover:bg-enfermagem/90 sm:min-h-40 sm:text-xl"
           disabled={pendente || !podeIniciarEnfermagem}
           onClick={() => void iniciarEtapa("desmontagem")}
         >
-          <CircleDot className="size-5" aria-hidden="true" />
+          <CircleDot className="size-6 shrink-0 sm:size-8" aria-hidden="true" />
           Início Enfermagem
         </Button>
         <Button
           size="lg"
-          className="h-14 whitespace-normal bg-enfermagem-strong px-2 text-xs leading-tight font-semibold sm:h-16 text-enfermagem-foreground hover:bg-enfermagem-strong/90 sm:text-base"
+          className="flex h-auto min-h-28 flex-col items-center justify-center gap-2 whitespace-normal rounded-xl bg-enfermagem-strong px-3 py-4 text-center text-base leading-tight font-bold text-enfermagem-foreground hover:bg-enfermagem-strong/90 sm:min-h-40 sm:text-xl"
           disabled={pendente || !podeFinalizarEnfermagem}
           onClick={() => enfermagemAberta && void finalizarEtapa(enfermagemAberta)}
         >
-          <CheckCircle2 className="size-5" aria-hidden="true" />
+          <CheckCircle2 className="size-6 shrink-0 sm:size-8" aria-hidden="true" />
           Final Enfermagem
         </Button>
         <Button
           size="lg"
-          className="h-14 whitespace-normal bg-limpeza px-2 text-xs leading-tight font-semibold sm:h-16 text-limpeza-foreground hover:bg-limpeza/90 sm:text-base"
+          className="flex h-auto min-h-28 flex-col items-center justify-center gap-2 whitespace-normal rounded-xl bg-limpeza px-3 py-4 text-center text-base leading-tight font-bold text-limpeza-foreground hover:bg-limpeza/90 sm:min-h-40 sm:text-xl"
           disabled={pendente || !podeIniciarLimpeza}
           onClick={() => void iniciarEtapa("limpeza")}
         >
-          <CircleDot className="size-5" aria-hidden="true" />
+          <CircleDot className="size-6 shrink-0 sm:size-8" aria-hidden="true" />
           Início Limpeza
         </Button>
         <Button
           size="lg"
-          className="h-14 whitespace-normal bg-limpeza-strong px-2 text-xs leading-tight font-semibold sm:h-16 text-limpeza-foreground hover:bg-limpeza-strong/90 sm:text-base"
+          className="flex h-auto min-h-28 flex-col items-center justify-center gap-2 whitespace-normal rounded-xl bg-limpeza-strong px-3 py-4 text-center text-base leading-tight font-bold text-limpeza-foreground hover:bg-limpeza-strong/90 sm:min-h-40 sm:text-xl"
           disabled={pendente || !podeFinalizarLimpeza}
           onClick={() => limpezaAberta && void finalizarEtapa(limpezaAberta)}
         >
-          <CheckCircle2 className="size-5" aria-hidden="true" />
+          <CheckCircle2 className="size-6 shrink-0 sm:size-8" aria-hidden="true" />
           Final Limpeza
         </Button>
       </div>
@@ -225,7 +225,7 @@ export function SalaCard({
         <Button
           size="lg"
           variant={parada ? "destructive" : "outline"}
-          className="min-h-14 h-auto w-full whitespace-normal px-3 py-3 text-center text-sm font-bold uppercase tracking-wide leading-tight sm:min-h-16 sm:text-base"
+          className="mx-auto flex min-h-16 h-auto w-full items-center justify-center whitespace-normal px-3 py-4 text-center text-base font-bold uppercase tracking-wide leading-tight sm:min-h-20 sm:text-lg"
           disabled={pendente}
           onClick={() => void alternarParada()}
         >

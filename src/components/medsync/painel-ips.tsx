@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Ban, ShieldOff, Trash2, Timer } from "lucide-react";
+import { Ban, LockOpen, ShieldOff, Trash2, Timer } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { bloquearIp, desbloquearIp, painelIps, purgarLogsAntigos } from "@/lib/api/seguranca";
+import {
+  bloquearIp,
+  desbloquearIp,
+  liberarRede,
+  painelIps,
+  purgarLogsAntigos,
+} from "@/lib/api/seguranca";
 
 const DURACOES = [
   { valor: "60", nome: "1 hora" },
@@ -36,6 +42,7 @@ export function PainelIps({ dias }: { dias: number }) {
   const bloquear = bloquearIp;
   const liberar = desbloquearIp;
   const purgar = purgarLogsAntigos;
+  const liberarLogin = liberarRede;
 
   const [ip, setIp] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -75,6 +82,15 @@ export function PainelIps({ dias }: { dias: number }) {
     mutationFn: (alvo: string) => liberar({ data: { ip: alvo } }),
     onSuccess: () => {
       toast.success("Bloqueio removido.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mLiberarRede = useMutation({
+    mutationFn: (alvo: { ip?: string; email?: string }) => liberarLogin({ data: alvo }),
+    onSuccess: () => {
+      toast.success("Liberado. O acesso já pode ser tentado de novo.");
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -153,6 +169,49 @@ export function PainelIps({ dias }: { dias: number }) {
 
           <div className="space-y-2">
             <p className="text-sm font-medium">
+              Travados agora por senhas erradas ({data?.travados.length ?? 0})
+            </p>
+            {!isLoading && !data?.travados.length ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma rede ou conta travada neste momento.
+              </p>
+            ) : null}
+            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+              {(data?.travados ?? []).map((t) => (
+                <div
+                  key={`${t.tipo}:${t.alvo}`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-sm">{t.alvo}</span>
+                      <Badge variant="outline">{t.tipo === "ip" ? "rede (IP)" : "conta"}</Badge>
+                      <Badge variant="destructive">
+                        {t.falhas} falha{t.falhas > 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Destrava sozinho em {quando(t.liberaEm)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={mLiberarRede.isPending}
+                    onClick={() =>
+                      mLiberarRede.mutate(t.tipo === "ip" ? { ip: t.alvo } : { email: t.alvo })
+                    }
+                  >
+                    <LockOpen className="size-4" />{" "}
+                    {t.tipo === "ip" ? "Liberar rede" : "Liberar conta"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
               Bloqueios registrados ({data?.bloqueios.length ?? 0})
             </p>
             {isLoading ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
@@ -211,27 +270,40 @@ export function PainelIps({ dias }: { dias: number }) {
                       </Badge>
                       {s.sucessos ? <Badge variant="outline">{s.sucessos} sucesso(s)</Badge> : null}
                       {s.bloqueado ? <Badge variant="destructive">bloqueado</Badge> : null}
+                      {s.travado ? <Badge variant="destructive">travado</Badge> : null}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {s.regiao ?? "região desconhecida"} · última tentativa{" "}
                       {quando(s.ultimaTentativa)} · {s.emails.join(", ") || "sem e-mail"}
                     </p>
                   </div>
-                  {!s.bloqueado ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        mBloquear.mutate({
-                          ip: s.ip,
-                          motivo: `${s.falhas} falhas de login em ${dias} dia(s)`,
-                          duracao: "1440",
-                        })
-                      }
-                    >
-                      <Timer className="size-4" /> Timeout 24h
-                    </Button>
-                  ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    {s.bloqueado || s.travado ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={mLiberarRede.isPending}
+                        onClick={() => mLiberarRede.mutate({ ip: s.ip })}
+                      >
+                        <LockOpen className="size-4" /> Liberar rede
+                      </Button>
+                    ) : null}
+                    {!s.bloqueado ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          mBloquear.mutate({
+                            ip: s.ip,
+                            motivo: `${s.falhas} falhas de login em ${dias} dia(s)`,
+                            duracao: "1440",
+                          })
+                        }
+                      >
+                        <Timer className="size-4" /> Timeout 24h
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>

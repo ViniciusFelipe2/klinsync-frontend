@@ -59,6 +59,18 @@ export function formatDuracao(segundos: number): string {
   return h > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
 }
 
+/** Duração para gestores, sempre com unidade: "45 s", "18 min", "2 h 05 min". */
+export function formatDuracaoLegivel(segundos: number | null | undefined): string {
+  if (segundos == null) return "—";
+  const s = Math.max(0, Math.round(segundos));
+  if (s < 60) return `${s} s`;
+  const min = Math.round(s / 60);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const r = min % 60;
+  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, "0")} min`;
+}
+
 export function segundosDesde(iso: string, agora: number): number {
   return (agora - new Date(iso).getTime()) / 1000;
 }

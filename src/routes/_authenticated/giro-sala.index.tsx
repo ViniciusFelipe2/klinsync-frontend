@@ -188,7 +188,7 @@ function Operacional() {
             Selecione a sala deste tablet para continuar.
           </p>
         ) : (
-          <div className="mx-auto grid max-w-2xl gap-4">
+          <div className="mx-auto grid max-w-3xl gap-4">
             {visiveis.map((sala) => (
               <SalaCard
                 key={sala.id}

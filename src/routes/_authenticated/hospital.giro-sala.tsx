@@ -1,10 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { FiltroPeriodoSala } from "@/components/medsync/filtro-periodo-sala";
 import { HospitalShell } from "@/components/medsync/hospital-shell";
+import {
+  EnfermagemXLimpezaPorDia,
+  IndicadoresDoPeriodo,
+  NotaMetodologica,
+  ResumoPorSala,
+  SalasParadasAgora,
+} from "@/components/medsync/resumo-giro-por-sala";
 import { TabelaDados, type Coluna } from "@/components/medsync/tabela-dados";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,15 +21,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  estatisticasParadaHospital,
   giroDoHospital,
   paradasDoHospital,
   salasDoHospital,
+  type LinhaGiro,
 } from "@/lib/api/hospital";
-import { ETAPA_LABEL, formatDuracao } from "@/lib/giro";
+import { ETAPA_LABEL, formatDuracaoLegivel } from "@/lib/giro";
+import {
+  filtroComPadrao,
+  lerFiltroHospital,
+  rotuloPeriodo,
+  type FiltroHospital,
+} from "@/lib/periodo";
 
 export const Route = createFileRoute("/_authenticated/hospital/giro-sala")({
   head: () => ({
@@ -40,169 +53,33 @@ export const Route = createFileRoute("/_authenticated/hospital/giro-sala")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: lerFiltroHospital,
   component: RelatorioGiro,
 });
 
-type Linha = {
-  id: string;
-  sala: string;
-  tipo_evento: string;
-  inicio: string;
-  fim: string | null;
-  duracao_segundos: number | null;
-  cirurgia_anterior: string | null;
-  cirurgia_proxima: string | null;
-};
+const dataHora = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+const hora = (iso: string) =>
+  new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-const COLUNAS: Coluna<Linha>[] = [
+const COLUNAS: Coluna<LinhaGiro>[] = [
   { chave: "sala", titulo: "Sala", valor: (l) => l.sala },
   {
     chave: "etapa",
     titulo: "Etapa",
     valor: (l) => ETAPA_LABEL[l.tipo_evento as keyof typeof ETAPA_LABEL] ?? l.tipo_evento,
   },
-  { chave: "inicio", titulo: "Início", valor: (l) => new Date(l.inicio).toLocaleString("pt-BR") },
-  {
-    chave: "fim",
-    titulo: "Fim",
-    valor: (l) => (l.fim ? new Date(l.fim).toLocaleString("pt-BR") : "em andamento"),
-  },
+  { chave: "inicio", titulo: "Início", valor: (l) => dataHora(l.inicio) },
+  { chave: "fim", titulo: "Fim", valor: (l) => (l.fim ? hora(l.fim) : "em andamento") },
   {
     chave: "duracao",
     titulo: "Duração",
-    valor: (l) => (l.duracao_segundos == null ? "—" : formatDuracao(l.duracao_segundos)),
+    valor: (l) => (l.fim ? formatDuracaoLegivel(l.duracao_segundos) : "em andamento"),
   },
+  { chave: "por", titulo: "Iniciado por", valor: (l) => l.usuario_inicio ?? "—" },
   { chave: "anterior", titulo: "Cirurgia anterior", valor: (l) => l.cirurgia_anterior ?? "—" },
   { chave: "proxima", titulo: "Próxima cirurgia", valor: (l) => l.cirurgia_proxima ?? "—" },
 ];
-
-const POR_PAGINA = 20;
-
-function RelatorioGiro() {
-  const fetcher = giroDoHospital;
-  const fetchSalas = salasDoHospital;
-  const [salaId, setSalaId] = useState("todas");
-  const [etapa, setEtapa] = useState<"todas" | "desmontagem" | "limpeza">("todas");
-  const [de, setDe] = useState("");
-  const [ate, setAte] = useState("");
-  const [pagina, setPagina] = useState(1);
-
-  const salas = useQuery({ queryKey: ["hospital-salas"], queryFn: () => fetchSalas() });
-  const q = useQuery({
-    queryKey: ["hospital-giro", salaId, etapa, de, ate, pagina],
-    queryFn: () =>
-      fetcher({
-        data: {
-          salaId,
-          etapa,
-          de: de || undefined,
-          ate: ate || undefined,
-          pagina,
-          porPagina: POR_PAGINA,
-        },
-      }),
-    placeholderData: keepPreviousData,
-  });
-
-  return (
-    <HospitalShell
-      titulo="Giro de sala"
-      subtitulo="Relatório completo do módulo, incluindo salas paradas"
-    >
-      <Tabs defaultValue="eventos" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="eventos">Eventos de giro</TabsTrigger>
-          <TabsTrigger value="paradas">Salas paradas</TabsTrigger>
-        </TabsList>
-        <TabsContent value="eventos">
-          <TabelaDados
-            titulo="Eventos de giro"
-            nomeArquivo="medsync-giro-de-sala"
-            colunas={COLUNAS}
-            linhas={(q.data?.linhas ?? []) as Linha[]}
-            total={q.data?.total ?? 0}
-            pagina={pagina}
-            porPagina={POR_PAGINA}
-            onPagina={setPagina}
-            carregando={q.isLoading}
-            filtros={
-              <>
-                <div className="space-y-1.5">
-                  <Label>Sala</Label>
-                  <Select
-                    value={salaId}
-                    onValueChange={(v) => {
-                      setSalaId(v);
-                      setPagina(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todas">Todas as salas</SelectItem>
-                      {(salas.data ?? []).map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Etapa</Label>
-                  <Select
-                    value={etapa}
-                    onValueChange={(v) => {
-                      setEtapa(v as typeof etapa);
-                      setPagina(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todas">Todas as etapas</SelectItem>
-                      <SelectItem value="desmontagem">Enfermagem</SelectItem>
-                      <SelectItem value="limpeza">Limpeza</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="gde">De</Label>
-                  <Input
-                    id="gde"
-                    type="date"
-                    value={de}
-                    onChange={(e) => {
-                      setDe(e.target.value);
-                      setPagina(1);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="gate">Até</Label>
-                  <Input
-                    id="gate"
-                    type="date"
-                    value={ate}
-                    onChange={(e) => {
-                      setAte(e.target.value);
-                      setPagina(1);
-                    }}
-                  />
-                </div>
-              </>
-            }
-          />
-        </TabsContent>
-        <TabsContent value="paradas">
-          <AbaParadas salas={salas.data ?? []} />
-        </TabsContent>
-      </Tabs>
-    </HospitalShell>
-  );
-}
 
 type LinhaParada = {
   id: string;
@@ -214,157 +91,249 @@ type LinhaParada = {
 
 const COLUNAS_PARADA: Coluna<LinhaParada>[] = [
   { chave: "sala", titulo: "Sala", valor: (l) => l.sala },
-  { chave: "dia", titulo: "Dia", valor: (l) => new Date(l.inicio).toLocaleDateString("pt-BR") },
-  {
-    chave: "inicio",
-    titulo: "Início",
-    valor: (l) => new Date(l.inicio).toLocaleTimeString("pt-BR"),
-  },
+  { chave: "inicio", titulo: "Início", valor: (l) => dataHora(l.inicio) },
   {
     chave: "fim",
     titulo: "Fim",
-    valor: (l) => (l.fim ? new Date(l.fim).toLocaleTimeString("pt-BR") : "em andamento"),
+    valor: (l) => (l.fim ? dataHora(l.fim) : "parada agora"),
   },
   {
     chave: "duracao",
     titulo: "Tempo parada",
-    valor: (l) => (l.duracao_segundos == null ? "—" : formatDuracao(l.duracao_segundos)),
+    valor: (l) => (l.fim ? formatDuracaoLegivel(l.duracao_segundos) : "em andamento"),
   },
 ];
 
-function AbaParadas({ salas }: { salas: { id: string; nome: string }[] }) {
-  const fetchParadas = paradasDoHospital;
-  const fetchStats = estatisticasParadaHospital;
-  const [salaId, setSalaId] = useState("todas");
-  const [de, setDe] = useState("");
-  const [ate, setAte] = useState("");
-  const [pagina, setPagina] = useState(1);
+const POR_PAGINA = 20;
 
-  const lista = useQuery({
-    queryKey: ["hospital-paradas", salaId, de, ate, pagina],
+function RelatorioGiro() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const filtro = filtroComPadrao(search);
+  const mudarFiltro = (f: FiltroHospital) =>
+    void navigate({ search: { de: f.de, ate: f.ate, sala: f.sala }, replace: true });
+
+  // Vindo do dashboard com "#eventos": rola até a lista depois que a tela monta.
+  useEffect(() => {
+    if (window.location.hash === "#eventos") {
+      document.getElementById("eventos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
+  // Sala da lista de eventos: começa com a do topo e pode ser trocada só para a lista.
+  const [salaLista, setSalaLista] = useState(filtro.sala);
+  const [salaTopo, setSalaTopo] = useState(filtro.sala);
+  if (salaTopo !== filtro.sala) {
+    setSalaTopo(filtro.sala);
+    setSalaLista(filtro.sala);
+  }
+  const filtroLista = { ...filtro, sala: salaLista };
+
+  const verEventosDaSala = (salaId: string) => {
+    setSalaLista(salaId);
+    requestAnimationFrame(() =>
+      document.getElementById("eventos")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
+
+  return (
+    <HospitalShell
+      titulo="Giro de sala"
+      subtitulo="Enfermagem, limpeza e paradas de cada sala no período escolhido"
+    >
+      <div className="space-y-8">
+        <FiltroPeriodoSala
+          key={`${filtro.de}_${filtro.ate}`}
+          filtro={filtro}
+          onChange={mudarFiltro}
+        />
+
+        <SalasParadasAgora filtro={filtro} />
+
+        <IndicadoresDoPeriodo filtro={filtro} />
+
+        <section aria-labelledby="titulo-por-sala" className="space-y-3">
+          <h2 id="titulo-por-sala" className="text-lg font-semibold">
+            1. Por sala
+          </h2>
+          <ResumoPorSala
+            filtro={filtro}
+            acaoSala={(s) => (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto p-0"
+                onClick={() => verEventosDaSala(s.id)}
+                aria-label={`Ver eventos da ${s.nome}`}
+              >
+                Ver eventos
+              </Button>
+            )}
+          />
+        </section>
+
+        <section aria-labelledby="titulo-por-dia" className="space-y-3">
+          <h2 id="titulo-por-dia" className="text-lg font-semibold">
+            2. Quem está demorando mais: enfermagem ou limpeza
+          </h2>
+          <EnfermagemXLimpezaPorDia filtro={filtro} />
+        </section>
+
+        <section id="eventos" aria-labelledby="titulo-eventos" className="scroll-mt-28 space-y-3">
+          <div>
+            <h2 id="titulo-eventos" className="text-lg font-semibold">
+              3. Eventos do período
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Cada linha é um registro feito no tablet da sala, em {rotuloPeriodo(filtro)}.
+            </p>
+          </div>
+          <Tabs defaultValue="eventos" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="eventos">Enfermagem e limpeza</TabsTrigger>
+              <TabsTrigger value="paradas">Paradas</TabsTrigger>
+            </TabsList>
+            <TabsContent value="eventos">
+              <ListaGiro filtro={filtroLista} onSala={setSalaLista} />
+            </TabsContent>
+            <TabsContent value="paradas">
+              <ListaParadas filtro={filtroLista} onSala={setSalaLista} />
+            </TabsContent>
+          </Tabs>
+        </section>
+
+        <NotaMetodologica />
+      </div>
+    </HospitalShell>
+  );
+}
+
+function ListaGiro({ filtro, onSala }: { filtro: FiltroHospital; onSala: (s: string) => void }) {
+  const [etapa, setEtapa] = useState<"todas" | "desmontagem" | "limpeza">("todas");
+  const [pagina, setPagina] = useState(1);
+  // Filtro do topo mudou: volta para a primeira página.
+  const chave = `${filtro.de}|${filtro.ate}|${filtro.sala}`;
+  const [chaveAnterior, setChaveAnterior] = useState(chave);
+  if (chave !== chaveAnterior) {
+    setChaveAnterior(chave);
+    setPagina(1);
+  }
+
+  const q = useQuery({
+    queryKey: ["hospital-giro", filtro.sala, etapa, filtro.de, filtro.ate, pagina],
     queryFn: () =>
-      fetchParadas({
-        data: { salaId, de: de || undefined, ate: ate || undefined, pagina, porPagina: POR_PAGINA },
+      giroDoHospital({
+        data: {
+          salaId: filtro.sala,
+          etapa,
+          de: filtro.de,
+          ate: filtro.ate,
+          pagina,
+          porPagina: POR_PAGINA,
+        },
       }),
     placeholderData: keepPreviousData,
   });
 
-  const stats = useQuery({
-    queryKey: ["hospital-paradas-stats", salaId, de, ate],
-    queryFn: () => fetchStats({ data: { salaId, de: de || undefined, ate: ate || undefined } }),
+  return (
+    <TabelaDados
+      titulo={`Enfermagem e limpeza · ${rotuloPeriodo(filtro)}`}
+      nomeArquivo={`klinsync-giro-de-sala-${filtro.de}-a-${filtro.ate}`}
+      colunas={COLUNAS}
+      linhas={q.data?.linhas ?? []}
+      total={q.data?.total ?? 0}
+      pagina={pagina}
+      porPagina={POR_PAGINA}
+      onPagina={setPagina}
+      carregando={q.isLoading}
+      filtros={
+        <>
+          <SeletorSalaLista valor={filtro.sala} onChange={onSala} />
+          <div className="space-y-1.5">
+            <Label>Etapa</Label>
+            <Select
+              value={etapa}
+              onValueChange={(v) => {
+                setEtapa(v as typeof etapa);
+                setPagina(1);
+              }}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Enfermagem e limpeza</SelectItem>
+                <SelectItem value="desmontagem">Só enfermagem</SelectItem>
+                <SelectItem value="limpeza">Só limpeza</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      }
+    />
+  );
+}
+
+function ListaParadas({ filtro, onSala }: { filtro: FiltroHospital; onSala: (s: string) => void }) {
+  const [pagina, setPagina] = useState(1);
+  const chave = `${filtro.de}|${filtro.ate}|${filtro.sala}`;
+  const [chaveAnterior, setChaveAnterior] = useState(chave);
+  if (chave !== chaveAnterior) {
+    setChaveAnterior(chave);
+    setPagina(1);
+  }
+
+  const lista = useQuery({
+    queryKey: ["hospital-paradas", filtro.sala, filtro.de, filtro.ate, pagina],
+    queryFn: () =>
+      paradasDoHospital({
+        data: {
+          salaId: filtro.sala,
+          de: filtro.de,
+          ate: filtro.ate,
+          pagina,
+          porPagina: POR_PAGINA,
+        },
+      }),
+    placeholderData: keepPreviousData,
   });
 
-  const dur = (s: number | null | undefined) => (s == null ? "—" : formatDuracao(s));
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Média de sala parada por período</CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Total considera o período filtrado; as médias usam as janelas fixas de 7, 15, 30 e 45
-            dias.
-          </p>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {(stats.data?.salas ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma parada registrada nos últimos 45 dias.
-            </p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2 pr-4">Sala</th>
-                  <th className="py-2 pr-4">Paradas no período</th>
-                  <th className="py-2 pr-4">Total parada</th>
-                  {(stats.data?.janelas ?? []).map((j) => (
-                    <th key={j} className="py-2 pr-4">
-                      Média {j}d
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(stats.data?.salas ?? []).map((s) => (
-                  <tr key={s.id} className="border-b last:border-0">
-                    <td className="py-2 pr-4 font-medium text-foreground">{s.sala}</td>
-                    <td className="py-2 pr-4">{s.ocorrencias}</td>
-                    <td className="py-2 pr-4">{dur(s.total)}</td>
-                    {(stats.data?.janelas ?? []).map((j) => (
-                      <td key={j} className="py-2 pr-4">
-                        {dur(s.medias[j] ?? null)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+    <TabelaDados
+      titulo={`Paradas · ${rotuloPeriodo(filtro)}`}
+      nomeArquivo={`klinsync-salas-paradas-${filtro.de}-a-${filtro.ate}`}
+      colunas={COLUNAS_PARADA}
+      linhas={(lista.data?.linhas ?? []) as LinhaParada[]}
+      total={lista.data?.total ?? 0}
+      pagina={pagina}
+      porPagina={POR_PAGINA}
+      onPagina={setPagina}
+      carregando={lista.isLoading}
+      filtros={<SeletorSalaLista valor={filtro.sala} onChange={onSala} />}
+    />
+  );
+}
 
-      <TabelaDados
-        titulo="Registros de sala parada"
-        nomeArquivo="medsync-salas-paradas"
-        colunas={COLUNAS_PARADA}
-        linhas={(lista.data?.linhas ?? []) as LinhaParada[]}
-        total={lista.data?.total ?? 0}
-        pagina={pagina}
-        porPagina={POR_PAGINA}
-        onPagina={setPagina}
-        carregando={lista.isLoading}
-        filtros={
-          <>
-            <div className="space-y-1.5">
-              <Label>Sala</Label>
-              <Select
-                value={salaId}
-                onValueChange={(v) => {
-                  setSalaId(v);
-                  setPagina(1);
-                }}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas as salas</SelectItem>
-                  {salas.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pde">De</Label>
-              <Input
-                id="pde"
-                type="date"
-                value={de}
-                onChange={(e) => {
-                  setDe(e.target.value);
-                  setPagina(1);
-                }}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pate">Até</Label>
-              <Input
-                id="pate"
-                type="date"
-                value={ate}
-                onChange={(e) => {
-                  setAte(e.target.value);
-                  setPagina(1);
-                }}
-              />
-            </div>
-          </>
-        }
-      />
+/** Sala só da lista de eventos (não mexe no filtro do topo). */
+function SeletorSalaLista({ valor, onChange }: { valor: string; onChange: (s: string) => void }) {
+  const salas = useQuery({ queryKey: ["hospital-salas"], queryFn: () => salasDoHospital() });
+  return (
+    <div className="space-y-1.5">
+      <Label>Sala da lista</Label>
+      <Select value={valor} onValueChange={onChange}>
+        <SelectTrigger className="w-48" aria-label="Sala da lista de eventos">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todas">Todas as salas</SelectItem>
+          {(salas.data ?? []).map((s) => (
+            <SelectItem key={s.id} value={s.id}>
+              {s.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

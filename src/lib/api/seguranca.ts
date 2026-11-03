@@ -19,7 +19,12 @@ export type IpSuspeito = {
   regiao: string | null;
   emails: string[];
   bloqueado: boolean;
+  /** Travado por excesso de senhas erradas (diferente de um bloqueio manual/automático em "bloqueios"). */
+  travado: boolean;
 };
+
+/** Rede (IP) ou conta (e-mail) travada agora por senhas erradas; o master pode liberar. */
+export type Travado = { tipo: "ip" | "email"; alvo: string; falhas: number; liberaEm: string };
 
 /** Visão consolidada de segurança: indicadores, IPs suspeitos e bloqueios ativos. */
 export const painelIps = endpointPost<
@@ -34,6 +39,7 @@ export const painelIps = endpointPost<
       ipsUnicos: number;
       ipsSuspeitos: number;
       bloqueiosAtivos: number;
+      travadosAgora: number;
       usuariosAtivos: number;
       usuariosInativos: number;
       masters: number;
@@ -41,6 +47,7 @@ export const painelIps = endpointPost<
     politica: { max_tentativas: number; janela_minutos: number; bloqueio_minutos: number };
     ips: IpSuspeito[];
     bloqueios: IpBloqueado[];
+    travados: Travado[];
   }
 >("/master/seguranca/ips");
 
@@ -57,6 +64,12 @@ export const bloquearIp = endpointPost<
 export const desbloquearIp = endpointPost<{ ip: string }, { ok: true }>(
   "/master/seguranca/ips/desbloquear",
 );
+
+/** Libera uma rede (IP) e/ou conta (e-mail) travada por senhas erradas. O histórico de acessos é mantido. */
+export const liberarRede = endpointPost<
+  { ip?: string | undefined; email?: string | undefined },
+  { ok: true; falhasPerdoadas: number }
+>("/master/seguranca/ips/liberar");
 
 /** Retenção mínima de dados pessoais (LGPD): expurga logs antigos. */
 export const purgarLogsAntigos = endpointPost<{ dias: number }, Record<string, number>>(

@@ -19,6 +19,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -26,7 +27,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  alterarStatusHospital,
   alternarFeature,
+  excluirHospital,
   excluirSalaMaster,
   masterDashboard,
   salasDoTenantMaster,
@@ -224,7 +238,16 @@ function Hospitais() {
           <Card key={t.id}>
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
-                <CardTitle>{t.nome}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle>{t.nome}</CardTitle>
+                  <Badge variant={t.status === "ativo" ? "secondary" : "destructive"}>
+                    {t.status === "ativo"
+                      ? "Ativo"
+                      : t.status === "inadimplente"
+                        ? "Inadimplente"
+                        : "Desativado"}
+                  </Badge>
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.cnpj ?? "sem CNPJ"} · {t.status} · {t.contato_nome ?? "sem contato"}
                 </p>
@@ -256,6 +279,12 @@ function Hospitais() {
                 >
                   Editar
                 </Button>
+                <AcoesDoHospital
+                  id={t.id}
+                  nome={t.nome}
+                  ativo={t.status === "ativo"}
+                  aoExcluir={() => setForm((f) => (f.id === t.id ? vazio : f))}
+                />
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -289,6 +318,144 @@ function Hospitais() {
         ))}
       </div>
     </div>
+  );
+}
+
+const normalizar = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
+/** Desativar/reativar e excluir um hospital. Ambos pedem confirmação, e a exclusão pede o nome de volta. */
+function AcoesDoHospital({
+  id,
+  nome,
+  ativo,
+  aoExcluir,
+}: {
+  id: string;
+  nome: string;
+  ativo: boolean;
+  aoExcluir: () => void;
+}) {
+  const qc = useQueryClient();
+  const [excluindo, setExcluindo] = useState(false);
+  const [confirmacao, setConfirmacao] = useState("");
+
+  const mStatus = useMutation({
+    mutationFn: (status: "ativo" | "inativo") => alterarStatusHospital({ data: { id, status } }),
+    onSuccess: (_r, status) => {
+      toast.success(status === "ativo" ? "Hospital reativado." : "Hospital desativado.");
+      void qc.invalidateQueries({ queryKey: ["master-dashboard"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mExcluir = useMutation({
+    mutationFn: () => excluirHospital({ data: { id, confirmarNome: confirmacao } }),
+    onSuccess: (r) => {
+      if (r.fotosNaoRemovidas > 0) {
+        toast.warning(
+          `Hospital excluído, mas ${r.fotosNaoRemovidas} foto(s) não saíram do armazenamento. Avise o suporte técnico.`,
+        );
+      } else {
+        toast.success("Hospital excluído.");
+      }
+      setExcluindo(false);
+      setConfirmacao("");
+      aoExcluir();
+      void qc.invalidateQueries({ queryKey: ["master-dashboard"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <>
+      {ativo ? (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" disabled={mStatus.isPending}>
+              Desativar
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Desativar {nome}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Todos os logins deste hospital serão desconectados agora e não conseguirão entrar
+                até a reativação. O admin verá que a conta foi desativada; os operadores verão
+                apenas "Não foi possível fazer login". Nenhum dado é apagado.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => mStatus.mutate("inativo")}>
+                Desativar hospital
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={mStatus.isPending}
+          onClick={() => mStatus.mutate("ativo")}
+        >
+          Reativar
+        </Button>
+      )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-destructive"
+        disabled={ativo}
+        title={ativo ? "Desative o hospital antes de excluir." : undefined}
+        onClick={() => setExcluindo(true)}
+      >
+        <Trash2 /> Excluir
+      </Button>
+
+      <Dialog
+        open={excluindo}
+        onOpenChange={(aberto) => {
+          setExcluindo(aberto);
+          if (!aberto) setConfirmacao("");
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Excluir {nome}?</DialogTitle>
+            <DialogDescription>
+              Isto apaga <strong>definitivamente</strong> o hospital, as salas, o histórico de giro,
+              os check-ins com as fotos, os convites e todos os logins da equipe. Não há como
+              desfazer. Para só bloquear o acesso, use "Desativar".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor={`confirma-${id}`}>
+              Digite <strong>{nome}</strong> para confirmar
+            </Label>
+            <Input
+              id={`confirma-${id}`}
+              autoComplete="off"
+              value={confirmacao}
+              onChange={(e) => setConfirmacao(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluindo(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={normalizar(confirmacao) !== normalizar(nome) || mExcluir.isPending}
+              onClick={() => mExcluir.mutate()}
+            >
+              {mExcluir.isPending ? "Excluindo..." : "Excluir definitivamente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

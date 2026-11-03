@@ -106,6 +106,9 @@ function Login() {
         );
       } else if (err instanceof ApiError && err.status === 401) {
         toast.error("E-mail ou senha inválidos.");
+      } else if (err instanceof ApiError && err.status === 403) {
+        // Hospital desativado: o servidor já escolhe o texto certo para cada perfil (admin x operador).
+        toast.error(mensagemAmigavel(err, "Não foi possível fazer login."), { duration: 10000 });
       } else {
         toast.error(mensagemAmigavel(err));
       }

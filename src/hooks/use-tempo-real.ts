@@ -21,6 +21,7 @@ const AFETADAS: Record<Exclude<TipoAviso, "reconectado">, string[]> = {
     "hospital-resumo",
     "hospital-giro",
     "hospital-giro-stats",
+    "hospital-giro-por-sala",
     "hospital-paradas",
     "hospital-paradas-stats",
     "hospital-salas",
