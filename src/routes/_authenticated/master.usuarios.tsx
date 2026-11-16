@@ -32,6 +32,8 @@ import {
   masterDashboard,
   resetarSenha,
 } from "@/lib/api/medsync";
+import { FuncaoCme } from "@/components/cme/funcao-cme";
+import { listarContasCme } from "@/lib/api/cme";
 
 export const Route = createFileRoute("/_authenticated/master/usuarios")({
   component: Usuarios,
@@ -138,6 +140,7 @@ function Usuarios() {
 
   const dash = useQuery({ queryKey: ["master-dashboard"], queryFn: () => fetchDash() });
   const usuarios = useQuery({ queryKey: ["master-usuarios"], queryFn: () => fetchUsuarios() });
+  const contasCme = useQuery({ queryKey: ["master-cme-contas"], queryFn: listarContasCme });
 
   const mCriar = useMutation({
     mutationFn: () => {
@@ -301,7 +304,10 @@ function Usuarios() {
         <CardContent className="space-y-3">
           {(usuarios.data ?? []).map((u) => {
             const hospital = dash.data?.tenants.find((t) => t.id === u.tenant_id)?.nome;
-            const feature = dash.data?.features.find((f) => f.id === u.feature_id)?.nome_exibicao;
+            const featureDoLogin = dash.data?.features.find((f) => f.id === u.feature_id);
+            const feature = featureDoLogin?.nome_exibicao;
+            const ehLoginCme = u.role === "operador" && featureDoLogin?.chave === "cme";
+            const contaCme = contasCme.data?.find((c) => c.usuario_id === u.id);
             return (
               <div
                 key={u.id}
@@ -315,9 +321,21 @@ function Usuarios() {
                     <Badge variant="secondary">{u.role}</Badge>
                     {hospital ? <span>{hospital}</span> : <span>Plataforma</span>}
                     {feature ? <span>· {feature}</span> : null}
+                    {contaCme?.tipo === "chefe" ? <Badge>Chefe do CME</Badge> : null}
+                    {contaCme?.tipo === "estacao_sala" ? (
+                      <Badge>Computador da {contaCme.sala_nome}</Badge>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {ehLoginCme && u.tenant_id ? (
+                    <FuncaoCme
+                      usuarioId={u.id}
+                      tenantId={u.tenant_id}
+                      tipo={contaCme?.tipo ?? null}
+                      salaId={contaCme?.sala_id ?? null}
+                    />
+                  ) : null}
                   <Button
                     size="sm"
                     variant="outline"

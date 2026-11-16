@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedCheckInRouteImport } from './routes/_authenticated/check-in'
+import { Route as AuthenticatedCmeRouteImport } from './routes/_authenticated/cme'
 import { Route as AuthenticatedGiroSalaRouteImport } from './routes/_authenticated/giro-sala'
 import { Route as AuthenticatedHospitalRouteImport } from './routes/_authenticated/hospital'
 import { Route as AuthenticatedMasterRouteImport } from './routes/_authenticated/master'
@@ -21,11 +22,19 @@ import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenti
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as AuthenticatedCheckInIndexRouteImport } from './routes/_authenticated/check-in.index'
 import { Route as AuthenticatedCheckInPainelRouteImport } from './routes/_authenticated/check-in.painel'
+import { Route as AuthenticatedCmeIndexRouteImport } from './routes/_authenticated/cme.index'
+import { Route as AuthenticatedCmeColaboradoresRouteImport } from './routes/_authenticated/cme.colaboradores'
+import { Route as AuthenticatedCmeConfiguracaoRouteImport } from './routes/_authenticated/cme.configuracao'
+import { Route as AuthenticatedCmeFalhasRouteImport } from './routes/_authenticated/cme.falhas'
+import { Route as AuthenticatedCmeImpressaoRouteImport } from './routes/_authenticated/cme.impressao'
+import { Route as AuthenticatedCmeSalaRouteImport } from './routes/_authenticated/cme.sala'
+import { Route as AuthenticatedCmeTesteLeituraRouteImport } from './routes/_authenticated/cme.teste-leitura'
 import { Route as AuthenticatedGiroSalaIndexRouteImport } from './routes/_authenticated/giro-sala.index'
 import { Route as AuthenticatedGiroSalaAdminRouteImport } from './routes/_authenticated/giro-sala.admin'
 import { Route as AuthenticatedHospitalIndexRouteImport } from './routes/_authenticated/hospital.index'
 import { Route as AuthenticatedHospitalAcessosRouteImport } from './routes/_authenticated/hospital.acessos'
 import { Route as AuthenticatedHospitalCheckInRouteImport } from './routes/_authenticated/hospital.check-in'
+import { Route as AuthenticatedHospitalCmeRouteImport } from './routes/_authenticated/hospital.cme'
 import { Route as AuthenticatedHospitalEquipeRouteImport } from './routes/_authenticated/hospital.equipe'
 import { Route as AuthenticatedHospitalGiroSalaRouteImport } from './routes/_authenticated/hospital.giro-sala'
 import { Route as AuthenticatedHospitalSalasRouteImport } from './routes/_authenticated/hospital.salas'
@@ -61,6 +70,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
 const AuthenticatedCheckInRoute = AuthenticatedCheckInRouteImport.update({
   id: '/check-in',
   path: '/check-in',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCmeRoute = AuthenticatedCmeRouteImport.update({
+  id: '/cme',
+  path: '/cme',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedGiroSalaRoute = AuthenticatedGiroSalaRouteImport.update({
@@ -101,6 +115,45 @@ const AuthenticatedCheckInPainelRoute =
     path: '/painel',
     getParentRoute: () => AuthenticatedCheckInRoute,
   } as any)
+const AuthenticatedCmeIndexRoute = AuthenticatedCmeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedCmeRoute,
+} as any)
+const AuthenticatedCmeColaboradoresRoute =
+  AuthenticatedCmeColaboradoresRouteImport.update({
+    id: '/colaboradores',
+    path: '/colaboradores',
+    getParentRoute: () => AuthenticatedCmeRoute,
+  } as any)
+const AuthenticatedCmeConfiguracaoRoute =
+  AuthenticatedCmeConfiguracaoRouteImport.update({
+    id: '/configuracao',
+    path: '/configuracao',
+    getParentRoute: () => AuthenticatedCmeRoute,
+  } as any)
+const AuthenticatedCmeFalhasRoute = AuthenticatedCmeFalhasRouteImport.update({
+  id: '/falhas',
+  path: '/falhas',
+  getParentRoute: () => AuthenticatedCmeRoute,
+} as any)
+const AuthenticatedCmeImpressaoRoute =
+  AuthenticatedCmeImpressaoRouteImport.update({
+    id: '/impressao',
+    path: '/impressao',
+    getParentRoute: () => AuthenticatedCmeRoute,
+  } as any)
+const AuthenticatedCmeSalaRoute = AuthenticatedCmeSalaRouteImport.update({
+  id: '/sala',
+  path: '/sala',
+  getParentRoute: () => AuthenticatedCmeRoute,
+} as any)
+const AuthenticatedCmeTesteLeituraRoute =
+  AuthenticatedCmeTesteLeituraRouteImport.update({
+    id: '/teste-leitura',
+    path: '/teste-leitura',
+    getParentRoute: () => AuthenticatedCmeRoute,
+  } as any)
 const AuthenticatedGiroSalaIndexRoute =
   AuthenticatedGiroSalaIndexRouteImport.update({
     id: '/',
@@ -129,6 +182,12 @@ const AuthenticatedHospitalCheckInRoute =
   AuthenticatedHospitalCheckInRouteImport.update({
     id: '/check-in',
     path: '/check-in',
+    getParentRoute: () => AuthenticatedHospitalRoute,
+  } as any)
+const AuthenticatedHospitalCmeRoute =
+  AuthenticatedHospitalCmeRouteImport.update({
+    id: '/cme',
+    path: '/cme',
     getParentRoute: () => AuthenticatedHospitalRoute,
   } as any)
 const AuthenticatedHospitalEquipeRoute =
@@ -208,15 +267,23 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/app': typeof AuthenticatedAppRoute
   '/check-in': typeof AuthenticatedCheckInRouteWithChildren
+  '/cme': typeof AuthenticatedCmeRouteWithChildren
   '/giro-sala': typeof AuthenticatedGiroSalaRouteWithChildren
   '/hospital': typeof AuthenticatedHospitalRouteWithChildren
   '/master': typeof AuthenticatedMasterRouteWithChildren
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/check-in/painel': typeof AuthenticatedCheckInPainelRoute
+  '/cme/colaboradores': typeof AuthenticatedCmeColaboradoresRoute
+  '/cme/configuracao': typeof AuthenticatedCmeConfiguracaoRoute
+  '/cme/falhas': typeof AuthenticatedCmeFalhasRoute
+  '/cme/impressao': typeof AuthenticatedCmeImpressaoRoute
+  '/cme/sala': typeof AuthenticatedCmeSalaRoute
+  '/cme/teste-leitura': typeof AuthenticatedCmeTesteLeituraRoute
   '/giro-sala/admin': typeof AuthenticatedGiroSalaAdminRoute
   '/hospital/acessos': typeof AuthenticatedHospitalAcessosRoute
   '/hospital/check-in': typeof AuthenticatedHospitalCheckInRoute
+  '/hospital/cme': typeof AuthenticatedHospitalCmeRoute
   '/hospital/equipe': typeof AuthenticatedHospitalEquipeRoute
   '/hospital/giro-sala': typeof AuthenticatedHospitalGiroSalaRoute
   '/hospital/salas': typeof AuthenticatedHospitalSalasRoute
@@ -229,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/master/permissoes': typeof AuthenticatedMasterPermissoesRoute
   '/master/usuarios': typeof AuthenticatedMasterUsuariosRoute
   '/check-in/': typeof AuthenticatedCheckInIndexRoute
+  '/cme/': typeof AuthenticatedCmeIndexRoute
   '/giro-sala/': typeof AuthenticatedGiroSalaIndexRoute
   '/hospital/': typeof AuthenticatedHospitalIndexRoute
   '/master/': typeof AuthenticatedMasterIndexRoute
@@ -240,9 +308,16 @@ export interface FileRoutesByTo {
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/check-in/painel': typeof AuthenticatedCheckInPainelRoute
+  '/cme/colaboradores': typeof AuthenticatedCmeColaboradoresRoute
+  '/cme/configuracao': typeof AuthenticatedCmeConfiguracaoRoute
+  '/cme/falhas': typeof AuthenticatedCmeFalhasRoute
+  '/cme/impressao': typeof AuthenticatedCmeImpressaoRoute
+  '/cme/sala': typeof AuthenticatedCmeSalaRoute
+  '/cme/teste-leitura': typeof AuthenticatedCmeTesteLeituraRoute
   '/giro-sala/admin': typeof AuthenticatedGiroSalaAdminRoute
   '/hospital/acessos': typeof AuthenticatedHospitalAcessosRoute
   '/hospital/check-in': typeof AuthenticatedHospitalCheckInRoute
+  '/hospital/cme': typeof AuthenticatedHospitalCmeRoute
   '/hospital/equipe': typeof AuthenticatedHospitalEquipeRoute
   '/hospital/giro-sala': typeof AuthenticatedHospitalGiroSalaRoute
   '/hospital/salas': typeof AuthenticatedHospitalSalasRoute
@@ -255,6 +330,7 @@ export interface FileRoutesByTo {
   '/master/permissoes': typeof AuthenticatedMasterPermissoesRoute
   '/master/usuarios': typeof AuthenticatedMasterUsuariosRoute
   '/check-in': typeof AuthenticatedCheckInIndexRoute
+  '/cme': typeof AuthenticatedCmeIndexRoute
   '/giro-sala': typeof AuthenticatedGiroSalaIndexRoute
   '/hospital': typeof AuthenticatedHospitalIndexRoute
   '/master': typeof AuthenticatedMasterIndexRoute
@@ -266,15 +342,23 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/check-in': typeof AuthenticatedCheckInRouteWithChildren
+  '/_authenticated/cme': typeof AuthenticatedCmeRouteWithChildren
   '/_authenticated/giro-sala': typeof AuthenticatedGiroSalaRouteWithChildren
   '/_authenticated/hospital': typeof AuthenticatedHospitalRouteWithChildren
   '/_authenticated/master': typeof AuthenticatedMasterRouteWithChildren
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/_authenticated/check-in/painel': typeof AuthenticatedCheckInPainelRoute
+  '/_authenticated/cme/colaboradores': typeof AuthenticatedCmeColaboradoresRoute
+  '/_authenticated/cme/configuracao': typeof AuthenticatedCmeConfiguracaoRoute
+  '/_authenticated/cme/falhas': typeof AuthenticatedCmeFalhasRoute
+  '/_authenticated/cme/impressao': typeof AuthenticatedCmeImpressaoRoute
+  '/_authenticated/cme/sala': typeof AuthenticatedCmeSalaRoute
+  '/_authenticated/cme/teste-leitura': typeof AuthenticatedCmeTesteLeituraRoute
   '/_authenticated/giro-sala/admin': typeof AuthenticatedGiroSalaAdminRoute
   '/_authenticated/hospital/acessos': typeof AuthenticatedHospitalAcessosRoute
   '/_authenticated/hospital/check-in': typeof AuthenticatedHospitalCheckInRoute
+  '/_authenticated/hospital/cme': typeof AuthenticatedHospitalCmeRoute
   '/_authenticated/hospital/equipe': typeof AuthenticatedHospitalEquipeRoute
   '/_authenticated/hospital/giro-sala': typeof AuthenticatedHospitalGiroSalaRoute
   '/_authenticated/hospital/salas': typeof AuthenticatedHospitalSalasRoute
@@ -287,6 +371,7 @@ export interface FileRoutesById {
   '/_authenticated/master/permissoes': typeof AuthenticatedMasterPermissoesRoute
   '/_authenticated/master/usuarios': typeof AuthenticatedMasterUsuariosRoute
   '/_authenticated/check-in/': typeof AuthenticatedCheckInIndexRoute
+  '/_authenticated/cme/': typeof AuthenticatedCmeIndexRoute
   '/_authenticated/giro-sala/': typeof AuthenticatedGiroSalaIndexRoute
   '/_authenticated/hospital/': typeof AuthenticatedHospitalIndexRoute
   '/_authenticated/master/': typeof AuthenticatedMasterIndexRoute
@@ -298,15 +383,23 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/app'
     | '/check-in'
+    | '/cme'
     | '/giro-sala'
     | '/hospital'
     | '/master'
     | '/operacional'
     | '/convite/$token'
     | '/check-in/painel'
+    | '/cme/colaboradores'
+    | '/cme/configuracao'
+    | '/cme/falhas'
+    | '/cme/impressao'
+    | '/cme/sala'
+    | '/cme/teste-leitura'
     | '/giro-sala/admin'
     | '/hospital/acessos'
     | '/hospital/check-in'
+    | '/hospital/cme'
     | '/hospital/equipe'
     | '/hospital/giro-sala'
     | '/hospital/salas'
@@ -319,6 +412,7 @@ export interface FileRouteTypes {
     | '/master/permissoes'
     | '/master/usuarios'
     | '/check-in/'
+    | '/cme/'
     | '/giro-sala/'
     | '/hospital/'
     | '/master/'
@@ -330,9 +424,16 @@ export interface FileRouteTypes {
     | '/operacional'
     | '/convite/$token'
     | '/check-in/painel'
+    | '/cme/colaboradores'
+    | '/cme/configuracao'
+    | '/cme/falhas'
+    | '/cme/impressao'
+    | '/cme/sala'
+    | '/cme/teste-leitura'
     | '/giro-sala/admin'
     | '/hospital/acessos'
     | '/hospital/check-in'
+    | '/hospital/cme'
     | '/hospital/equipe'
     | '/hospital/giro-sala'
     | '/hospital/salas'
@@ -345,6 +446,7 @@ export interface FileRouteTypes {
     | '/master/permissoes'
     | '/master/usuarios'
     | '/check-in'
+    | '/cme'
     | '/giro-sala'
     | '/hospital'
     | '/master'
@@ -355,15 +457,23 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/_authenticated/app'
     | '/_authenticated/check-in'
+    | '/_authenticated/cme'
     | '/_authenticated/giro-sala'
     | '/_authenticated/hospital'
     | '/_authenticated/master'
     | '/_authenticated/operacional'
     | '/convite/$token'
     | '/_authenticated/check-in/painel'
+    | '/_authenticated/cme/colaboradores'
+    | '/_authenticated/cme/configuracao'
+    | '/_authenticated/cme/falhas'
+    | '/_authenticated/cme/impressao'
+    | '/_authenticated/cme/sala'
+    | '/_authenticated/cme/teste-leitura'
     | '/_authenticated/giro-sala/admin'
     | '/_authenticated/hospital/acessos'
     | '/_authenticated/hospital/check-in'
+    | '/_authenticated/hospital/cme'
     | '/_authenticated/hospital/equipe'
     | '/_authenticated/hospital/giro-sala'
     | '/_authenticated/hospital/salas'
@@ -376,6 +486,7 @@ export interface FileRouteTypes {
     | '/_authenticated/master/permissoes'
     | '/_authenticated/master/usuarios'
     | '/_authenticated/check-in/'
+    | '/_authenticated/cme/'
     | '/_authenticated/giro-sala/'
     | '/_authenticated/hospital/'
     | '/_authenticated/master/'
@@ -423,6 +534,13 @@ declare module '@tanstack/react-router' {
       path: '/check-in'
       fullPath: '/check-in'
       preLoaderRoute: typeof AuthenticatedCheckInRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cme': {
+      id: '/_authenticated/cme'
+      path: '/cme'
+      fullPath: '/cme'
+      preLoaderRoute: typeof AuthenticatedCmeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/giro-sala': {
@@ -474,6 +592,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCheckInPainelRouteImport
       parentRoute: typeof AuthenticatedCheckInRoute
     }
+    '/_authenticated/cme/': {
+      id: '/_authenticated/cme/'
+      path: '/'
+      fullPath: '/cme/'
+      preLoaderRoute: typeof AuthenticatedCmeIndexRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/colaboradores': {
+      id: '/_authenticated/cme/colaboradores'
+      path: '/colaboradores'
+      fullPath: '/cme/colaboradores'
+      preLoaderRoute: typeof AuthenticatedCmeColaboradoresRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/configuracao': {
+      id: '/_authenticated/cme/configuracao'
+      path: '/configuracao'
+      fullPath: '/cme/configuracao'
+      preLoaderRoute: typeof AuthenticatedCmeConfiguracaoRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/falhas': {
+      id: '/_authenticated/cme/falhas'
+      path: '/falhas'
+      fullPath: '/cme/falhas'
+      preLoaderRoute: typeof AuthenticatedCmeFalhasRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/impressao': {
+      id: '/_authenticated/cme/impressao'
+      path: '/impressao'
+      fullPath: '/cme/impressao'
+      preLoaderRoute: typeof AuthenticatedCmeImpressaoRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/sala': {
+      id: '/_authenticated/cme/sala'
+      path: '/sala'
+      fullPath: '/cme/sala'
+      preLoaderRoute: typeof AuthenticatedCmeSalaRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/teste-leitura': {
+      id: '/_authenticated/cme/teste-leitura'
+      path: '/teste-leitura'
+      fullPath: '/cme/teste-leitura'
+      preLoaderRoute: typeof AuthenticatedCmeTesteLeituraRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
     '/_authenticated/giro-sala/': {
       id: '/_authenticated/giro-sala/'
       path: '/'
@@ -507,6 +674,13 @@ declare module '@tanstack/react-router' {
       path: '/check-in'
       fullPath: '/hospital/check-in'
       preLoaderRoute: typeof AuthenticatedHospitalCheckInRouteImport
+      parentRoute: typeof AuthenticatedHospitalRoute
+    }
+    '/_authenticated/hospital/cme': {
+      id: '/_authenticated/hospital/cme'
+      path: '/cme'
+      fullPath: '/hospital/cme'
+      preLoaderRoute: typeof AuthenticatedHospitalCmeRouteImport
       parentRoute: typeof AuthenticatedHospitalRoute
     }
     '/_authenticated/hospital/equipe': {
@@ -609,6 +783,29 @@ const AuthenticatedCheckInRouteChildren: AuthenticatedCheckInRouteChildren = {
 const AuthenticatedCheckInRouteWithChildren =
   AuthenticatedCheckInRoute._addFileChildren(AuthenticatedCheckInRouteChildren)
 
+interface AuthenticatedCmeRouteChildren {
+  AuthenticatedCmeColaboradoresRoute: typeof AuthenticatedCmeColaboradoresRoute
+  AuthenticatedCmeConfiguracaoRoute: typeof AuthenticatedCmeConfiguracaoRoute
+  AuthenticatedCmeFalhasRoute: typeof AuthenticatedCmeFalhasRoute
+  AuthenticatedCmeImpressaoRoute: typeof AuthenticatedCmeImpressaoRoute
+  AuthenticatedCmeSalaRoute: typeof AuthenticatedCmeSalaRoute
+  AuthenticatedCmeTesteLeituraRoute: typeof AuthenticatedCmeTesteLeituraRoute
+  AuthenticatedCmeIndexRoute: typeof AuthenticatedCmeIndexRoute
+}
+
+const AuthenticatedCmeRouteChildren: AuthenticatedCmeRouteChildren = {
+  AuthenticatedCmeColaboradoresRoute: AuthenticatedCmeColaboradoresRoute,
+  AuthenticatedCmeConfiguracaoRoute: AuthenticatedCmeConfiguracaoRoute,
+  AuthenticatedCmeFalhasRoute: AuthenticatedCmeFalhasRoute,
+  AuthenticatedCmeImpressaoRoute: AuthenticatedCmeImpressaoRoute,
+  AuthenticatedCmeSalaRoute: AuthenticatedCmeSalaRoute,
+  AuthenticatedCmeTesteLeituraRoute: AuthenticatedCmeTesteLeituraRoute,
+  AuthenticatedCmeIndexRoute: AuthenticatedCmeIndexRoute,
+}
+
+const AuthenticatedCmeRouteWithChildren =
+  AuthenticatedCmeRoute._addFileChildren(AuthenticatedCmeRouteChildren)
+
 interface AuthenticatedGiroSalaRouteChildren {
   AuthenticatedGiroSalaAdminRoute: typeof AuthenticatedGiroSalaAdminRoute
   AuthenticatedGiroSalaIndexRoute: typeof AuthenticatedGiroSalaIndexRoute
@@ -627,6 +824,7 @@ const AuthenticatedGiroSalaRouteWithChildren =
 interface AuthenticatedHospitalRouteChildren {
   AuthenticatedHospitalAcessosRoute: typeof AuthenticatedHospitalAcessosRoute
   AuthenticatedHospitalCheckInRoute: typeof AuthenticatedHospitalCheckInRoute
+  AuthenticatedHospitalCmeRoute: typeof AuthenticatedHospitalCmeRoute
   AuthenticatedHospitalEquipeRoute: typeof AuthenticatedHospitalEquipeRoute
   AuthenticatedHospitalGiroSalaRoute: typeof AuthenticatedHospitalGiroSalaRoute
   AuthenticatedHospitalSalasRoute: typeof AuthenticatedHospitalSalasRoute
@@ -636,6 +834,7 @@ interface AuthenticatedHospitalRouteChildren {
 const AuthenticatedHospitalRouteChildren: AuthenticatedHospitalRouteChildren = {
   AuthenticatedHospitalAcessosRoute: AuthenticatedHospitalAcessosRoute,
   AuthenticatedHospitalCheckInRoute: AuthenticatedHospitalCheckInRoute,
+  AuthenticatedHospitalCmeRoute: AuthenticatedHospitalCmeRoute,
   AuthenticatedHospitalEquipeRoute: AuthenticatedHospitalEquipeRoute,
   AuthenticatedHospitalGiroSalaRoute: AuthenticatedHospitalGiroSalaRoute,
   AuthenticatedHospitalSalasRoute: AuthenticatedHospitalSalasRoute,
@@ -678,6 +877,7 @@ const AuthenticatedMasterRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedCheckInRoute: typeof AuthenticatedCheckInRouteWithChildren
+  AuthenticatedCmeRoute: typeof AuthenticatedCmeRouteWithChildren
   AuthenticatedGiroSalaRoute: typeof AuthenticatedGiroSalaRouteWithChildren
   AuthenticatedHospitalRoute: typeof AuthenticatedHospitalRouteWithChildren
   AuthenticatedMasterRoute: typeof AuthenticatedMasterRouteWithChildren
@@ -687,6 +887,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedCheckInRoute: AuthenticatedCheckInRouteWithChildren,
+  AuthenticatedCmeRoute: AuthenticatedCmeRouteWithChildren,
   AuthenticatedGiroSalaRoute: AuthenticatedGiroSalaRouteWithChildren,
   AuthenticatedHospitalRoute: AuthenticatedHospitalRouteWithChildren,
   AuthenticatedMasterRoute: AuthenticatedMasterRouteWithChildren,

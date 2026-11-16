@@ -7,6 +7,7 @@ import {
   DoorOpen,
   LayoutDashboard,
   Menu,
+  ScanLine,
   ShieldCheck,
   Users,
   X,
@@ -24,6 +25,7 @@ const ITENS = [
   { to: "/hospital", label: "Dashboard", icon: LayoutDashboard, exato: true },
   { to: "/hospital/check-in", label: "Check-in de cirurgiões", icon: ClipboardList },
   { to: "/hospital/giro-sala", label: "Giro de sala", icon: CalendarClock },
+  { to: "/hospital/cme", label: "CME", icon: ScanLine, modulo: "cme" },
   { to: "/hospital/salas", label: "Salas", icon: DoorOpen },
   { to: "/hospital/equipe", label: "Equipe", icon: Users },
   { to: "/hospital/acessos", label: "Acessos", icon: ShieldCheck },
@@ -82,7 +84,10 @@ export function HospitalShell({
             <p className="mt-1 text-xs text-brand-foreground/60">{data?.perfil?.nome}</p>
           </div>
           <nav className="flex flex-wrap gap-1 px-3 pb-4 lg:flex-col lg:flex-nowrap">
-            {ITENS.map((item) => (
+            {ITENS.filter(
+              (item) =>
+                !("modulo" in item) || data?.features.some((f) => f.chave === item.modulo),
+            ).map((item) => (
               <Link
                 key={item.to}
                 to={item.to}

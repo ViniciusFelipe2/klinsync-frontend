@@ -44,6 +44,11 @@ Mudanças em relação ao projeto mãe:
 - Bloqueio de login, log de tentativas e captcha passaram para `POST /auth/login` (no servidor).
 - Headers de segurança (CSP etc.) saem do servidor Node e passam a ser aplicados pelo CloudFront — ver [deploy/AWS.md](deploy/AWS.md).
 
+## Módulo CME
+
+Telas em `src/routes/_authenticated/cme*.tsx` e `hospital.cme.tsx` (somente leitura). O leitor é tratado só como um teclado que envia texto e Enter (`src/hooks/use-leitor.ts`), sem depender de um modelo.
+Os cálculos e os bloqueios ficam no servidor, onde estão os testes. Sem variável de ambiente nova. Roteiro de teste: [docs/CME-TESTE-HOSPITAL.md](docs/CME-TESTE-HOSPITAL.md).
+
 ## Deploy
 
 Push na `main` dispara [.github/workflows/deploy-frontend.yml](.github/workflows/deploy-frontend.yml): build → `s3 sync` → invalidação do CloudFront.

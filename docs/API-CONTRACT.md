@@ -122,6 +122,27 @@ Os cálculos (médias de enfermagem/limpeza/ciclo, janelas de 7/15/30/45 dias, e
 
 Todas as rotas de giro validam que a sala pertence ao tenant do chamador.
 
+## CME
+
+Toda rota filtra pelo hospital do token. Consulta: chefe, colaborador, `hospital_admin` e master. Alteração: só o chefe do CME.
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `GET /cme/acesso` | todos do módulo | Função do login e limites configurados |
+| `POST /cme/config` | chefe | Tamanho padrão, mínimo, aviso e matriz máxima |
+| `GET /cme/codigos` | consulta | Lista com a avaliação no tamanho pedido (`busca`, `tamanhoMm`, `pagina`, `inativos`) |
+| `POST /cme/codigos/gerar`, `/existente`, `/situacao` | chefe | Gera, registra código já gravado e inativa |
+| `POST /cme/codigos/previa` | chefe | Matriz e quadradinho de um conteúdo; sem matriz se bloqueado |
+| `POST /cme/impressao`, `/cme/exportar` | chefe | Lote; responde `422` com `bloqueados` se algum estiver abaixo do limite |
+| `POST /cme/folha-teste` | chefe | Mesmo código em 3, 4, 5, 6, 8 e 10 mm |
+| `POST /cme/testes` | chefe, colaborador | Registra leitura e anotação do teste (`origem`: `leitor`, `manual`, `nao_leu`) |
+| `GET /cme/testes/resumo`, `/cme/relatorio-falhas` | consulta | Taxa por tipo de peça; peças com mais falhas |
+| `GET /cme/caixas` | consulta | Caixas com os itens de cada uma e os itens ainda sem caixa |
+| `POST /cme/caixas/criar`, `/editar`, `POST /cme/itens/criar`, `/editar`, `/mover` | chefe | Cadastro de caixas e dos itens dentro delas |
+| `GET /cme/colaboradores`, `POST /cme/colaboradores/salvar`, `/situacao`, `POST /cme/crachas/impressao` | consulta / chefe | Colaboradores e crachás (o Data Matrix guarda o número do crachá) |
+| `POST /cme/sala/entrar`, `/sessao`, `/sair`, `/caixa` | computador da sala | Login por crachá (15 min sem uso encerra), e gabarito da caixa bipada. Sessão encerrada responde `422` com `sessaoEncerrada`, nunca `401` |
+| `GET /master/cme/contas`, `POST /master/cme/funcao` | master | Define a função do login: chefe do CME ou computador de uma sala |
+
 ## Tempo real (opcional, evolução futura)
 
 O front hoje usa polling (10–15 s). Se for preciso latência menor, expor SSE/WebSocket autenticado

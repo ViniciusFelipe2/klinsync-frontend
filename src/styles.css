@@ -444,3 +444,19 @@
   font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
+
+/* Folha de códigos do CME: A4 limpa. Cabeçalho e rodapé do navegador saem desmarcando-os na janela de impressão. */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  [data-sonner-toaster] {
+    display: none;
+  }
+}

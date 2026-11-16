@@ -1,6 +1,7 @@
 export const FEATURE_ROTAS: Record<string, string> = {
   checkin_cirurgioes: "/check-in",
   giro_de_sala: "/giro-sala",
+  cme: "/cme",
 };
 
 export const FEATURE_DESCRICAO: Record<string, string> = {
@@ -8,4 +9,5 @@ export const FEATURE_DESCRICAO: Record<string, string> = {
     "Registro de chegada dos cirurgiões, confirmação de presença e acompanhamento em tempo real.",
   giro_de_sala:
     "Cronometragem de desmontagem, limpeza e liberação das salas cirúrgicas com indicadores de giro.",
+  cme: "Códigos Data Matrix de itens e caixas, teste de leitura e rastreabilidade do CME.",
 };

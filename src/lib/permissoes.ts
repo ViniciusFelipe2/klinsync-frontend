@@ -106,6 +106,18 @@ export const RECURSOS: Recurso[] = [
     grupo: "Módulos",
     niveis: { master_admin: "sim", hospital_admin: "contratado", operador: "vinculado" },
   },
+  {
+    chave: "modulo_cme",
+    nome: "Módulo CME",
+    descricao: "Códigos Data Matrix, teste de leitura e rastreabilidade de materiais.",
+    grupo: "Módulos",
+    niveis: { master_admin: "parcial", hospital_admin: "parcial", operador: "vinculado" },
+    observacao: {
+      master_admin: "Consulta e define o chefe do CME; não altera cadastros.",
+      hospital_admin: "Somente leitura.",
+      operador: "O chefe do CME cadastra e imprime; a equipe faz as leituras.",
+    },
+  },
 ];
 
 export const ROTULO_NIVEL: Record<Nivel, string> = {
