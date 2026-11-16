@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ListaCaixas } from "@/components/cme/lista-caixas";
 import { ListaColaboradores } from "@/components/cme/lista-colaboradores";
+import { PainelCme } from "@/components/cme/painel";
 import { RelatorioFalhas, ResumoTestes } from "@/components/cme/relatorios";
 import { HospitalShell } from "@/components/medsync/hospital-shell";
 import { acessoCme } from "@/lib/api/cme";
@@ -17,13 +18,17 @@ function CmeHospital() {
   const acesso = useQuery({ queryKey: ["cme-acesso"], queryFn: acessoCme, retry: false });
 
   return (
-    <HospitalShell titulo="CME" subtitulo="Acompanhamento do que o CME cadastrou (somente leitura)">
+    <HospitalShell
+      titulo="CME"
+      subtitulo="Onde está cada caixa agora e o que o CME cadastrou (somente leitura)"
+    >
       {acesso.isError ? (
         <p className="text-sm text-muted-foreground">{acesso.error.message}</p>
       ) : !acesso.data ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : (
         <div className="space-y-6">
+          <PainelCme />
           <ListaCaixas podeEditar={false} tamanhoPadraoMm={acesso.data.config.tamanhoPadraoMm} />
           <ListaColaboradores podeEditar={false} />
           <RelatorioFalhas />

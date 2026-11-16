@@ -26,7 +26,7 @@ export type ConfigCme = {
 };
 
 export type AcessoCme = {
-  tipo: "chefe" | "colaborador" | "estacao_sala" | "painel_setor" | null;
+  tipo: "chefe" | "colaborador" | "estacao_sala" | "estacao_cme" | "painel_setor" | null;
   podeEditar: boolean;
   podeTestar: boolean;
   /** Só para o computador de sala. */
@@ -185,22 +185,26 @@ export const listarContasCme = () =>
 
 export const definirFuncaoCme = (data: {
   usuarioId: string;
-  funcao: "chefe" | "estacao_sala" | null;
+  funcao: "chefe" | "estacao_sala" | "estacao_cme" | null;
   salaId?: string;
 }) => http.post<{ ok: true }>("/master/cme/funcao", data);
 
 /* ---------------- Caixas e itens ---------------- */
 
-export type TipoCaixa = "casa" | "consignada";
+export type TipoCaixa = "casa" | "consignada" | "medica";
 
 export const ROTULO_TIPO_CAIXA: Record<TipoCaixa, string> = {
   casa: "Da casa",
   consignada: "Consignada",
+  medica: "Médica",
 };
 
 export type CaixaCme = CodigoCme & {
   tipo_caixa: TipoCaixa;
   descricao: string | null;
+  /** Só na caixa médica: dono da caixa e total de itens que ela deve ter. */
+  medico_nome: string | null;
+  total_itens: number | null;
   itens: CodigoCme[];
 };
 
@@ -214,6 +218,8 @@ export const criarCaixa = (data: {
   tipoCaixa: TipoCaixa;
   descricao?: string;
   codigoGravado?: string;
+  medicoNome?: string;
+  totalItens?: number;
 }) => http.post<CodigoCme>("/cme/caixas/criar", data);
 
 export const editarCaixa = (data: {
@@ -221,6 +227,8 @@ export const editarCaixa = (data: {
   rotulo: string;
   tipoCaixa: TipoCaixa;
   descricao?: string;
+  medicoNome?: string;
+  totalItens?: number;
 }) => http.post<{ ok: true }>("/cme/caixas/editar", data);
 
 export const criarItem = (data: { caixaId: string; rotulo: string; codigoGravado?: string }) =>
@@ -290,19 +298,25 @@ export const renovarSessaoCracha = (token: string) =>
 export const sairDaSala = (token: string, motivo: "manual" | "inatividade" = "manual") =>
   http.post<{ ok: true }>("/cme/sala/sair", { token, motivo });
 
-export type ItemDoGabarito = { id: string; rotulo: string; codigo: string; conferido: boolean };
+/** O gabarito não traz o código da peça de propósito: quem o visse poderia digitá-lo e burlar a conferência. */
+export type ItemDoGabarito = { id: string; rotulo: string; conferido: boolean };
+
+/** Onde a conferência item a item acontece. No computador da sala é sempre "sala". */
+export type SetorConferencia = "sala" | "expurgo" | "preparo";
 
 export type CaixaNaSala = {
   conferenciaId: string;
-  caixa: { id: string; rotulo: string; codigo: string; tipoCaixa: TipoCaixa };
+  setor: SetorConferencia;
+  caixa: { id: string; rotulo: string; tipoCaixa: TipoCaixa; medicoNome: string | null };
   itens: ItemDoGabarito[];
 };
 
 type LeituraDeCodigo = { token: string; texto: string; textoVisivel?: string; motivo?: string };
 
 /** Bipou a caixa: abre (ou retoma) a conferência e devolve o gabarito. */
-export const abrirCaixaNaSala = (data: LeituraDeCodigo & LeituraSala) =>
-  http.post<CaixaNaSala>("/cme/sala/caixa", data);
+export const abrirCaixaNaSala = (
+  data: LeituraDeCodigo & LeituraSala & { setor?: "expurgo" | "preparo" },
+) => http.post<CaixaNaSala>("/cme/sala/caixa", data);
 
 export const conferirItem = (data: LeituraDeCodigo & LeituraSala & { conferenciaId: string }) =>
   http.post<{ item: { id: string; rotulo: string }; itens: ItemDoGabarito[] }>(
@@ -312,3 +326,118 @@ export const conferirItem = (data: LeituraDeCodigo & LeituraSala & { conferencia
 
 export const finalizarConferencia = (data: { token: string; conferenciaId: string }) =>
   http.post<{ ok: true; itens: number; duracaoSegundos: number }>("/cme/sala/finalizar", data);
+
+/* ---------------- Máquinas, esterilização e painel ---------------- */
+
+export type CicloMaquina = { id: string; nome: string; duracaoMin: number };
+
+export type CargaResumo = {
+  id: string;
+  /** "aguardando_retirada": o ciclo terminou e falta confirmar que as caixas foram para o arsenal. */
+  status: "montando" | "em_ciclo" | "aguardando_retirada" | "concluida";
+  cicloId: string;
+  cicloNome: string;
+  duracaoMin: number;
+  iniciadaEm: string | null;
+  terminaEm: string | null;
+  caixas: number;
+};
+
+export type MaquinaCme = {
+  id: string;
+  nome: string;
+  ativo: boolean;
+  ciclos: CicloMaquina[];
+  /** Carga em montagem, em ciclo ou esperando ir para o arsenal. */
+  carga: CargaResumo | null;
+  /** Com a máquina livre: o último ciclo que terminou. */
+  ultimoCiclo: CargaResumo | null;
+};
+
+export type CargaDetalhe = Omit<CargaResumo, "caixas"> & {
+  maquina: { id: string; nome: string };
+  caixas: {
+    id: string;
+    rotulo: string;
+    tipoCaixa: TipoCaixa;
+    medicoNome: string | null;
+    adicionadaEm: string;
+  }[];
+  /** Relógio do servidor no momento da resposta: a contagem regressiva parte dele. */
+  agora: string;
+};
+
+export const listarMaquinas = () =>
+  http.get<{ maquinas: MaquinaCme[]; agora: string }>("/cme/maquinas");
+
+export const salvarMaquina = (data: {
+  id?: string;
+  nome: string;
+  ativo: boolean;
+  ciclos: { id?: string; nome: string; duracaoMin: number }[];
+}) => http.post<{ id: string }>("/cme/maquinas/salvar", data);
+
+/** Do computador do CME: lista as máquinas e o tempo restante de cada ciclo. */
+export const maquinasDaEsterilizacao = () =>
+  http.get<{ maquinas: MaquinaCme[]; agora: string }>("/cme/esterilizacao/maquinas");
+
+export const abrirCarga = (data: { token: string; maquinaId: string; cicloId?: string }) =>
+  http.post<CargaDetalhe>("/cme/esterilizacao/carga/abrir", data);
+
+export const biparCaixaNaCarga = (data: LeituraDeCodigo & LeituraSala & { cargaId: string }) =>
+  http.post<{ caixa: { id: string; rotulo: string }; carga: CargaDetalhe }>(
+    "/cme/esterilizacao/carga/caixa",
+    data,
+  );
+
+export const retirarCaixaDaCarga = (data: { token: string; cargaId: string; caixaId: string }) =>
+  http.post<CargaDetalhe>("/cme/esterilizacao/carga/remover", data);
+
+export const iniciarCiclo = (data: { token: string; cargaId: string }) =>
+  http.post<CargaDetalhe>("/cme/esterilizacao/carga/iniciar", data);
+
+/** Ciclo terminado: confirma que as caixas saíram da máquina e foram para o arsenal. */
+export const confirmarArsenal = (data: { token: string; cargaId: string }) =>
+  http.post<{ ok: true; caixas: number }>("/cme/esterilizacao/carga/arsenal", data);
+
+/** Só para teste (exige o modo de teste ligado): apaga a carga e libera a máquina. */
+export const cancelarCarga = (data: { token: string; cargaId: string }) =>
+  http.post<{ ok: true }>("/cme/esterilizacao/carga/cancelar", data);
+
+export type StatusCaixa =
+  "sala" | "expurgo" | "preparo" | "esterilizacao" | "arsenal" | "sem_movimento";
+
+export const ROTULO_STATUS_CAIXA: Record<StatusCaixa, string> = {
+  // Bipada na sala cirúrgica: já foi usada e está contaminada.
+  sala: "Contaminada",
+  expurgo: "No expurgo",
+  preparo: "Em preparo",
+  esterilizacao: "Na esterilização",
+  arsenal: "No arsenal",
+  sem_movimento: "Sem movimentação",
+};
+
+export type CaixaNoPainel = {
+  id: string;
+  rotulo: string;
+  tipoCaixa: TipoCaixa;
+  medicoNome: string | null;
+  status: StatusCaixa;
+  /** Desde quando está neste status; vazio para caixa que nunca foi bipada. */
+  desde: string | null;
+  salaNome: string | null;
+  maquinaNome: string | null;
+  cicloNome: string | null;
+  terminaEm: string | null;
+  itens: number;
+};
+
+export type PainelCme = {
+  agora: string;
+  resumo: Record<StatusCaixa, number>;
+  ultimas24h: { ciclos: number; caixasEsterilizadas: number };
+  maquinas: MaquinaCme[];
+  caixas: CaixaNoPainel[];
+};
+
+export const painelCme = () => http.get<PainelCme>("/cme/painel");

@@ -1,7 +1,7 @@
 import { BASE_URL, garantirSessaoValida, getSessao, renovarSessaoDetalhe } from "./http";
 
 /** "reconectado" é emitido a cada (re)conexão: quem ouve deve rebuscar tudo, pois pode ter perdido avisos. */
-export type TipoAviso = "giro" | "reserva" | "checkin" | "salas" | "reconectado";
+export type TipoAviso = "giro" | "reserva" | "checkin" | "salas" | "cme" | "reconectado";
 export type EstadoTempoReal = "conectando" | "ao-vivo" | "reconectando";
 
 type Ouvinte = (tipo: TipoAviso) => void;
@@ -117,7 +117,8 @@ function iniciar(): () => void {
                 nome === "giro" ||
                 nome === "reserva" ||
                 nome === "checkin" ||
-                nome === "salas"
+                nome === "salas" ||
+                nome === "cme"
               ) {
                 avisar(nome);
               }

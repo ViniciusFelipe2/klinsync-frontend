@@ -30,6 +30,7 @@ const AFETADAS: Record<Exclude<TipoAviso, "reconectado">, string[]> = {
   reserva: ["sala_dispositivos"],
   checkin: ["hospital-checkins", "hospital-resumo"],
   salas: ["salas", "hospital-salas", "hospital-resumo", "sala_dispositivos"],
+  cme: ["cme-painel", "cme-esterilizacao-maquinas", "cme-maquinas"],
 };
 
 /**

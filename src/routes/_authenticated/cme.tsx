@@ -34,12 +34,15 @@ function Conteudo({ nome }: { nome: string | null }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const acesso = useQuery({ queryKey: ["cme-acesso"], queryFn: acessoCme, retry: false });
-  const ehSala = acesso.data?.tipo === "estacao_sala";
+  const tipo = acesso.data?.tipo;
+  // Os computadores da sala e do CME só têm uma tela cada.
+  const telaUnica =
+    tipo === "estacao_sala" ? "/cme/sala" : tipo === "estacao_cme" ? "/cme/operacao" : null;
+  const ehSala = telaUnica !== null;
 
-  // O computador da sala só tem uma tela.
   useEffect(() => {
-    if (ehSala && pathname !== "/cme/sala") void navigate({ to: "/cme/sala", replace: true });
-  }, [ehSala, pathname, navigate]);
+    if (telaUnica && pathname !== telaUnica) void navigate({ to: telaUnica, replace: true });
+  }, [telaUnica, pathname, navigate]);
 
   const sair = async () => {
     await queryClient.cancelQueries();
@@ -62,10 +65,15 @@ function Conteudo({ nome }: { nome: string | null }) {
           </div>
           {ehSala ? (
             <span className="text-sm font-medium text-muted-foreground">
-              Computador da {acesso.data?.sala?.nome}
+              {tipo === "estacao_cme"
+                ? "Computador do CME"
+                : `Computador da ${acesso.data?.sala?.nome}`}
             </span>
           ) : (
             <nav className="flex flex-wrap items-center gap-1">
+              <Link to="/cme/painel" className={linkCls(pathname === "/cme/painel")}>
+                Painel
+              </Link>
               <Link to="/cme" className={linkCls(pathname === "/cme")}>
                 Caixas
               </Link>
@@ -100,7 +108,7 @@ function Conteudo({ nome }: { nome: string | null }) {
                 onClick={() => {
                   if (
                     window.confirm(
-                      "Desligar o login deste computador? Para usar de novo, será preciso a senha do computador da sala.",
+                      "Desligar o login deste computador? Para usar de novo, será preciso a senha deste computador.",
                     )
                   ) {
                     void sair();

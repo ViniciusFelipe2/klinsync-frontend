@@ -59,16 +59,28 @@ import { baixarPlanilha } from "@/lib/exportar";
 const TAMANHO_MIN = 3;
 const TAMANHO_MAX = 15;
 
-type CaixaEmEdicao = { id?: string; rotulo: string; tipoCaixa: TipoCaixa; descricao: string };
+type CaixaEmEdicao = {
+  id?: string;
+  rotulo: string;
+  tipoCaixa: TipoCaixa;
+  descricao: string;
+  /** Só na caixa médica. */
+  medicoNome: string;
+  totalItens: string;
+};
+
+const CAIXA_NOVA: CaixaEmEdicao = {
+  rotulo: "",
+  tipoCaixa: "casa",
+  descricao: "",
+  medicoNome: "",
+  totalItens: "",
+};
 
 /** Cria ou edita uma caixa. Na criação, aceita o código que já esteja gravado na caixa. */
 function DialogoCaixa({ caixa, aoFechar }: { caixa: CaixaEmEdicao | null; aoFechar: () => void }) {
   const qc = useQueryClient();
-  const [dados, setDados] = useState<CaixaEmEdicao>({
-    rotulo: "",
-    tipoCaixa: "casa",
-    descricao: "",
-  });
+  const [dados, setDados] = useState<CaixaEmEdicao>(CAIXA_NOVA);
   const [jaGravado, setJaGravado] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [aberta, setAberta] = useState<CaixaEmEdicao | null>(null);
@@ -86,6 +98,9 @@ function DialogoCaixa({ caixa, aoFechar }: { caixa: CaixaEmEdicao | null; aoFech
         rotulo: dados.rotulo,
         tipoCaixa: dados.tipoCaixa,
         ...(dados.descricao.trim() ? { descricao: dados.descricao.trim() } : {}),
+        ...(dados.tipoCaixa === "medica"
+          ? { medicoNome: dados.medicoNome.trim(), totalItens: Number(dados.totalItens) }
+          : {}),
       };
       if (dados.id) await editarCaixa({ id: dados.id, ...base });
       else await criarCaixa({ ...base, ...(jaGravado ? { codigoGravado: codigo } : {}) });
@@ -139,9 +154,39 @@ function DialogoCaixa({ caixa, aoFechar }: { caixa: CaixaEmEdicao | null; aoFech
               <SelectContent>
                 <SelectItem value="casa">Da casa</SelectItem>
                 <SelectItem value="consignada">De fora (consignada)</SelectItem>
+                <SelectItem value="medica">Médica (do próprio médico)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {dados.tipoCaixa === "medica" ? (
+            <div className="grid gap-3 sm:grid-cols-[1fr_9rem]">
+              <div className="space-y-1.5">
+                <Label htmlFor="caixa-medico">Nome do médico</Label>
+                <Input
+                  id="caixa-medico"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  autoComplete="off"
+                  value={dados.medicoNome}
+                  onChange={(e) => setDados((d) => ({ ...d, medicoNome: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="caixa-total">Itens no total</Label>
+                <Input
+                  id="caixa-total"
+                  required
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={500}
+                  value={dados.totalItens}
+                  onChange={(e) => setDados((d) => ({ ...d, totalItens: e.target.value }))}
+                />
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <Label htmlFor="caixa-descricao">Descrição (opcional)</Label>
             <Input
@@ -479,11 +524,14 @@ export function ListaCaixas({
             <Package className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <span className="font-semibold">{cx.rotulo}</span>
             <span className="font-mono text-sm text-muted-foreground">{cx.codigo}</span>
-            <Badge variant={cx.tipo_caixa === "consignada" ? "default" : "secondary"}>
+            <Badge variant={cx.tipo_caixa === "casa" ? "secondary" : "default"}>
               {ROTULO_TIPO_CAIXA[cx.tipo_caixa]}
             </Badge>
+            {cx.medico_nome ? <span className="text-sm">Dr(a). {cx.medico_nome}</span> : null}
             <span className="text-sm text-muted-foreground">
-              {ativos.length} {ativos.length === 1 ? "item" : "itens"}
+              {cx.total_itens !== null
+                ? `${ativos.length} de ${cx.total_itens} itens cadastrados`
+                : `${ativos.length} ${ativos.length === 1 ? "item" : "itens"}`}
             </span>
             {!cx.ativo ? <Badge variant="outline">Inativa</Badge> : null}
           </button>
@@ -526,6 +574,8 @@ export function ListaCaixas({
                         rotulo: cx.rotulo,
                         tipoCaixa: cx.tipo_caixa,
                         descricao: cx.descricao ?? "",
+                        medicoNome: cx.medico_nome ?? "",
+                        totalItens: cx.total_itens === null ? "" : String(cx.total_itens),
                       })
                     }
                   >
@@ -569,7 +619,7 @@ export function ListaCaixas({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle>Caixas ({caixas.length})</CardTitle>
           {podeEditar ? (
-            <Button onClick={() => setEditando({ rotulo: "", tipoCaixa: "casa", descricao: "" })}>
+            <Button onClick={() => setEditando(CAIXA_NOVA)}>
               <Plus className="size-4" aria-hidden="true" /> Nova caixa
             </Button>
           ) : null}

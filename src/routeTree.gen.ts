@@ -27,6 +27,8 @@ import { Route as AuthenticatedCmeColaboradoresRouteImport } from './routes/_aut
 import { Route as AuthenticatedCmeConfiguracaoRouteImport } from './routes/_authenticated/cme.configuracao'
 import { Route as AuthenticatedCmeFalhasRouteImport } from './routes/_authenticated/cme.falhas'
 import { Route as AuthenticatedCmeImpressaoRouteImport } from './routes/_authenticated/cme.impressao'
+import { Route as AuthenticatedCmeOperacaoRouteImport } from './routes/_authenticated/cme.operacao'
+import { Route as AuthenticatedCmePainelRouteImport } from './routes/_authenticated/cme.painel'
 import { Route as AuthenticatedCmeSalaRouteImport } from './routes/_authenticated/cme.sala'
 import { Route as AuthenticatedCmeTesteLeituraRouteImport } from './routes/_authenticated/cme.teste-leitura'
 import { Route as AuthenticatedGiroSalaIndexRouteImport } from './routes/_authenticated/giro-sala.index'
@@ -143,6 +145,17 @@ const AuthenticatedCmeImpressaoRoute =
     path: '/impressao',
     getParentRoute: () => AuthenticatedCmeRoute,
   } as any)
+const AuthenticatedCmeOperacaoRoute =
+  AuthenticatedCmeOperacaoRouteImport.update({
+    id: '/operacao',
+    path: '/operacao',
+    getParentRoute: () => AuthenticatedCmeRoute,
+  } as any)
+const AuthenticatedCmePainelRoute = AuthenticatedCmePainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedCmeRoute,
+} as any)
 const AuthenticatedCmeSalaRoute = AuthenticatedCmeSalaRouteImport.update({
   id: '/sala',
   path: '/sala',
@@ -278,6 +291,8 @@ export interface FileRoutesByFullPath {
   '/cme/configuracao': typeof AuthenticatedCmeConfiguracaoRoute
   '/cme/falhas': typeof AuthenticatedCmeFalhasRoute
   '/cme/impressao': typeof AuthenticatedCmeImpressaoRoute
+  '/cme/operacao': typeof AuthenticatedCmeOperacaoRoute
+  '/cme/painel': typeof AuthenticatedCmePainelRoute
   '/cme/sala': typeof AuthenticatedCmeSalaRoute
   '/cme/teste-leitura': typeof AuthenticatedCmeTesteLeituraRoute
   '/giro-sala/admin': typeof AuthenticatedGiroSalaAdminRoute
@@ -312,6 +327,8 @@ export interface FileRoutesByTo {
   '/cme/configuracao': typeof AuthenticatedCmeConfiguracaoRoute
   '/cme/falhas': typeof AuthenticatedCmeFalhasRoute
   '/cme/impressao': typeof AuthenticatedCmeImpressaoRoute
+  '/cme/operacao': typeof AuthenticatedCmeOperacaoRoute
+  '/cme/painel': typeof AuthenticatedCmePainelRoute
   '/cme/sala': typeof AuthenticatedCmeSalaRoute
   '/cme/teste-leitura': typeof AuthenticatedCmeTesteLeituraRoute
   '/giro-sala/admin': typeof AuthenticatedGiroSalaAdminRoute
@@ -353,6 +370,8 @@ export interface FileRoutesById {
   '/_authenticated/cme/configuracao': typeof AuthenticatedCmeConfiguracaoRoute
   '/_authenticated/cme/falhas': typeof AuthenticatedCmeFalhasRoute
   '/_authenticated/cme/impressao': typeof AuthenticatedCmeImpressaoRoute
+  '/_authenticated/cme/operacao': typeof AuthenticatedCmeOperacaoRoute
+  '/_authenticated/cme/painel': typeof AuthenticatedCmePainelRoute
   '/_authenticated/cme/sala': typeof AuthenticatedCmeSalaRoute
   '/_authenticated/cme/teste-leitura': typeof AuthenticatedCmeTesteLeituraRoute
   '/_authenticated/giro-sala/admin': typeof AuthenticatedGiroSalaAdminRoute
@@ -394,6 +413,8 @@ export interface FileRouteTypes {
     | '/cme/configuracao'
     | '/cme/falhas'
     | '/cme/impressao'
+    | '/cme/operacao'
+    | '/cme/painel'
     | '/cme/sala'
     | '/cme/teste-leitura'
     | '/giro-sala/admin'
@@ -428,6 +449,8 @@ export interface FileRouteTypes {
     | '/cme/configuracao'
     | '/cme/falhas'
     | '/cme/impressao'
+    | '/cme/operacao'
+    | '/cme/painel'
     | '/cme/sala'
     | '/cme/teste-leitura'
     | '/giro-sala/admin'
@@ -468,6 +491,8 @@ export interface FileRouteTypes {
     | '/_authenticated/cme/configuracao'
     | '/_authenticated/cme/falhas'
     | '/_authenticated/cme/impressao'
+    | '/_authenticated/cme/operacao'
+    | '/_authenticated/cme/painel'
     | '/_authenticated/cme/sala'
     | '/_authenticated/cme/teste-leitura'
     | '/_authenticated/giro-sala/admin'
@@ -625,6 +650,20 @@ declare module '@tanstack/react-router' {
       path: '/impressao'
       fullPath: '/cme/impressao'
       preLoaderRoute: typeof AuthenticatedCmeImpressaoRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/operacao': {
+      id: '/_authenticated/cme/operacao'
+      path: '/operacao'
+      fullPath: '/cme/operacao'
+      preLoaderRoute: typeof AuthenticatedCmeOperacaoRouteImport
+      parentRoute: typeof AuthenticatedCmeRoute
+    }
+    '/_authenticated/cme/painel': {
+      id: '/_authenticated/cme/painel'
+      path: '/painel'
+      fullPath: '/cme/painel'
+      preLoaderRoute: typeof AuthenticatedCmePainelRouteImport
       parentRoute: typeof AuthenticatedCmeRoute
     }
     '/_authenticated/cme/sala': {
@@ -788,6 +827,8 @@ interface AuthenticatedCmeRouteChildren {
   AuthenticatedCmeConfiguracaoRoute: typeof AuthenticatedCmeConfiguracaoRoute
   AuthenticatedCmeFalhasRoute: typeof AuthenticatedCmeFalhasRoute
   AuthenticatedCmeImpressaoRoute: typeof AuthenticatedCmeImpressaoRoute
+  AuthenticatedCmeOperacaoRoute: typeof AuthenticatedCmeOperacaoRoute
+  AuthenticatedCmePainelRoute: typeof AuthenticatedCmePainelRoute
   AuthenticatedCmeSalaRoute: typeof AuthenticatedCmeSalaRoute
   AuthenticatedCmeTesteLeituraRoute: typeof AuthenticatedCmeTesteLeituraRoute
   AuthenticatedCmeIndexRoute: typeof AuthenticatedCmeIndexRoute
@@ -798,6 +839,8 @@ const AuthenticatedCmeRouteChildren: AuthenticatedCmeRouteChildren = {
   AuthenticatedCmeConfiguracaoRoute: AuthenticatedCmeConfiguracaoRoute,
   AuthenticatedCmeFalhasRoute: AuthenticatedCmeFalhasRoute,
   AuthenticatedCmeImpressaoRoute: AuthenticatedCmeImpressaoRoute,
+  AuthenticatedCmeOperacaoRoute: AuthenticatedCmeOperacaoRoute,
+  AuthenticatedCmePainelRoute: AuthenticatedCmePainelRoute,
   AuthenticatedCmeSalaRoute: AuthenticatedCmeSalaRoute,
   AuthenticatedCmeTesteLeituraRoute: AuthenticatedCmeTesteLeituraRoute,
   AuthenticatedCmeIndexRoute: AuthenticatedCmeIndexRoute,

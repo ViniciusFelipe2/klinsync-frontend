@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Maquinas } from "@/components/cme/maquinas";
 import { Simulador } from "@/components/cme/simulador";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +55,7 @@ function Configuracao() {
   if (!acesso.data) return <p className="text-sm text-muted-foreground">Carregando...</p>;
   return (
     <div className="space-y-6">
+      <Maquinas />
       <Formulario inicial={acesso.data.config} />
       <Simulador tamanhoMm={acesso.data.config.tamanhoPadraoMm} />
     </div>
